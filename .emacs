@@ -4,20 +4,6 @@
 
 ;; Some stuff copied from handmade hero .emacs file
 
-
-
-;;;;;;;;;;;;;;;;;;;;;;
-;; Keyboard shortcuts:
-;; 
-;; M-i = Find file
-;; M-U = Find file in other window
-;; M-x = Switch buffer
-;; M-X = Switch buffer in other window
-;; M-o = Save buffer 
-;; M-a = Switch to other window
-;; C-S = Search In Buffer
-;;;;;;;;;;;;;;;;;;;;;;
-
 ;; ;;;;;;;
 ;; Config:
 
@@ -35,6 +21,48 @@
 
 ;;
 ;;;;;;;;;;;
+
+;; Error message if all lisp code was not executed(there where errors)
+(setq initial-scratch-message "There were errors in .emacs file. Run emacs with --debug-init to debug")
+
+;; Stuff
+(defun np3w-copy-whole-buffer ()
+  "Copy whole buffer to kill ring"
+  (interactive)
+  (kill-new (buffer-string))
+  )
+
+(defun np3w-reload-init-file ()
+  "Reload the .emacs file"
+  (interactive)
+  (delete-window)
+  (load-file "~/.emacs")
+  )
+
+;; Keyboard shortcuts
+(defvar np3w-keys-minor-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "M-i") 'find-file)
+	(define-key map (kbd "M-I") 'find-file-other-window)
+	(define-key map (kbd "M-b") 'ido-switch-buffer)
+	(define-key map (kbd "M-B") 'ido-switch-buffer-other-window)
+	(define-key map (kbd "M-a") 'np3w-other-window)
+	(define-key map (kbd "M-o") 'save-buffer)
+	;; deletes tab character instead of untabifying it
+	(define-key map (kbd "DEL") 'backward-delete-char)
+	(define-key map (kbd "C-;") 'kill-this-buffer)
+	(define-key map (kbd "C-a") 'np3w-copy-whole-buffer)
+    map)
+  "my-keys-minor-mode keymap.")
+
+(define-minor-mode np3w-keys-minor-mode
+  "A minor mode so that my key settings override annoying major modes."
+  :init-value t
+  :lighter " my-keys")
+
+(np3w-keys-minor-mode 1)
+
+;;
 
 ;; Enable MELPA packages
 ;; Use "list-packages" to browse packages
@@ -111,6 +139,9 @@
 (require 'compile)
 (ido-mode t)
 
+;; Delete selection when typing or pressing delete
+(delete-selection-mode)
+
 ;; Disable middle mouse button
 (global-unset-key [mouse-2])
 
@@ -134,7 +165,8 @@
 
 ;; Load cmake mode
 ;;(autoload 'cmake-mode "~/CMake/Auxiliary/cmake-mode.el" t)
-;;(load-file "~/CMake/Auxiliary/cmake-mode.el")
+(load-file "~/CMake/Auxiliary/cmake-mode.el")
+;;require('cmake-mode)
 
 ;; Auto mode
 (setq auto-mode-alist
@@ -218,38 +250,6 @@
   (other-window 1)
   )
 
-(defvar np3w-keys-minor-mode-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "M-i") 'find-file)
-	(define-key map (kbd "M-I") 'find-file-other-window)
-	(define-key map (kbd "M-b") 'ido-switch-buffer)
-	(define-key map (kbd "M-B") 'ido-switch-buffer-other-window)
-	(define-key map (kbd "M-a") 'np3w-other-window)
-	(define-key map (kbd "M-o") 'save-buffer)
-	(define-key map (kbd "DEL") 'backward-delete-char) ; deletes tab character instead of untabifying it
-    map)
-  "my-keys-minor-mode keymap.")
-
-(define-minor-mode np3w-keys-minor-mode
-  "A minor mode so that my key settings override annoying major modes."
-  :init-value t
-  :lighter " my-keys")
-
-(np3w-keys-minor-mode 1)
-
-;; Find file
-;;(define-key global-map (kbd "M-i") 'find-file)
-;;(define-key global-map (kbd "M-U") 'find-file-other-window)
-
-;; Switch buffer
-;;(global-set-key (kbd "M-b")	 'ido-switch-buffer)
-;;(global-set-key (kbd "M-B")	 'ido-switch-buffer-other-window)
-
-;;(global-set-key (kbd "M-a") 'np3w-other-window)
-
-;; Save buffer
-;;(global-set-key (kbd "M-o") 'save-buffer)
-
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;
 
@@ -270,3 +270,4 @@
 (add-hook 'window-setup-hook 'np3w-post-load t)
 
 ;; END
+
