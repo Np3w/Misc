@@ -4,8 +4,9 @@
 
 ;; Some stuff copied from handmade hero .emacs file
 
-;; ;;;;;;;
+;;;;;;;;;;
 ;; Config:
+;;
 
 ;; t = true
 ;; nil = false
@@ -19,10 +20,10 @@
 ;; If true eproject will be loaded
 (setq EnableEProject t)
 ;; If true cmake-ide, irony and flychecks will be loaded
-(setq EnableCMakeIde nil)
+(setq EnableCMakeIde t)
 
 ;;
-;;;;;;;;;;;
+;;;;;;;;;;;;;
 
 ;; Error message if all lisp code was not executed(there where errors)
 (setq initial-scratch-message "There were errors in .emacs file. Run emacs with --debug-init to debug")
@@ -31,7 +32,7 @@
 (unless (boundp 'np3w-window-setup-done)
   (split-window-horizontally)
   (setq np3w-window-setup-done t)
-)
+  )
 
 ;; Stuff
 (defun np3w-copy-whole-buffer ()
@@ -47,6 +48,12 @@
   (load-file "~/.emacs")
   )
 
+(defun back-to-indentation-or-beginning ()
+  (interactive)
+  (if (= (point) (progn (back-to-indentation) (point)))
+	  (beginning-of-line))
+  )
+
 ;; Keyboard shortcuts.
 ;; NOTE: This is for the dvorak programmer keyboard layout
 
@@ -59,18 +66,17 @@
 	(define-key map (kbd "M-b") 'ido-switch-buffer)
 	(define-key map (kbd "M-B") 'ido-switch-buffer-other-window)
 	(define-key map (kbd "M-a") 'np3w-other-window)
+	(define-key map (kbd "C-;") 'kill-this-buffer)
 
 	;; Saving
 	(define-key map (kbd "M-o") 'save-buffer)
 	
 	;; deletes tab character instead of untabifying it
 	(define-key map (kbd "DEL") 'backward-delete-char)
-
-	(define-key map (kbd "C-;") 'kill-this-buffer)
-
+	
 	;; Emacs auto indentation does not work very well sometimes. When that
 	;; happens C-tab can be used to insert the tab character
-	(global-set-key [C-tab] (lambda () (interactive) (insert-char 9 1)))
+	(define-key map [C-tab] (lambda () (interactive) (insert-char 9 1)))
 	
 	;; Killing and yanking(copy, cut and paste)
 	(define-key map (kbd "C-a") 'np3w-copy-whole-buffer)
@@ -80,10 +86,17 @@
 	;; Line
 	(define-key map (kbd "C-k") 'kill-line)
 	(define-key map (kbd "C-o") 'kill-whole-line)
+	
+	;; Paragraphs
+	(define-key map [prior] 'backward-paragraph)
+	(define-key map [next] 'forward-paragraph)
+
+	;; Jump to beginning of code instead of beginning of line
+	(define-key map (kbd "<home>") 'back-to-indentation-or-beginning)
     map)
   "my-keys-minor-mode keymap.")
 
- 
+
 
 (define-minor-mode np3w-keys-minor-mode
   :init-value t
@@ -186,7 +199,7 @@
   ;; Flycheck-irony setup
   (require 'flycheck-irony)
   
-;;  (eval-after-load 'flycheck
+  ;;  (eval-after-load 'flycheck
   ;;  '(add-hook 'flycheck-mode-hook #'flycheck-irony-setup))
   (flycheck-irony-setup)
 
@@ -277,7 +290,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (setq c-default-style "linux")
-		
+
 ;; Dont split windows. Use existing windows instead
 (defun np3w-never-split-a-window
 	nil
@@ -297,7 +310,7 @@
 
 (unless EnableSmoothScrolling
   (setq scroll-step 1)
- )
+  )
 
 ;; Disable cursor blinking
 (blink-cursor-mode 0)
@@ -306,6 +319,40 @@
 (setq-default c-basic-offset 4
 			  tab-width 4
 			  indent-tabs-mode t)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Fix enum class indentation
+;; From: https://gist.github.com/nschum/2626303
+
+(defun inside-class-enum-p (pos)
+  "Checks if POS is within the braces of a C++ \"enum class\"."
+  (ignore-errors
+    (save-excursion
+      (goto-char pos)
+      (up-list -1)
+      (backward-sexp 1)
+      (looking-back "enum[ \t]+class[ \t]+[^}]*"))))
+
+(defun align-enum-class (langelem)
+  (if (inside-class-enum-p (c-langelem-pos langelem))
+      0
+    (c-lineup-topmost-intro-cont langelem)))
+
+(defun align-enum-class-closing-brace (langelem)
+  (if (inside-class-enum-p (c-langelem-pos langelem))
+      '-
+    '+))
+
+(defun fix-enum-class ()
+  "Setup `c++-mode' to better handle \"class enum\"."
+  (add-to-list 'c-offsets-alist '(topmost-intro-cont . align-enum-class))
+  (add-to-list 'c-offsets-alist
+               '(statement-cont . align-enum-class-closing-brace)))
+
+(add-hook 'c++-mode-hook 'fix-enum-class)
+
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;
 ;; Setup key bindings:
@@ -339,7 +386,9 @@
 (set-cursor-color "#40FF40")
 
 ;; Change colors
-(set-face-attribute 'region nil :background "blue3")
+;;(set-face-attribute 'region nil :background "blue3")
+(set-face-attribute 'region nil :background "#202020")
+
 (set-face-attribute 'font-lock-constant-face nil      :foreground "burlywood3")
 (set-face-attribute 'font-lock-keyword-face nil       :foreground "aquamarine2")
 (set-face-attribute 'font-lock-type-face nil          :foreground "LightGreen")
