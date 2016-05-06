@@ -20,13 +20,25 @@
 ;; If true eproject will be loaded
 (setq EnableEProject t)
 ;; If true cmake-ide, irony and flychecks will be loaded
-(setq EnableCMakeIde t)
+(setq EnableCMakeIde nil)
+
+(setq EnableSMIE t)
+
+(setq EnableNp3wColorScheme t)
+;;(setq Np3wFont "outline-Liberation Mono")
+;;(setq Np3wFont "outline-DejaVu Sans Mono")
+
+(setq Np3wFont "Liberation Mono")
+(setq Np3wFontSize 125)
 
 ;;
 ;;;;;;;;;;;;;
 
 ;; Error message if all lisp code was not executed(there where errors)
 (setq initial-scratch-message "There were errors in .emacs file. Run emacs with --debug-init to debug")
+
+(set-face-attribute 'default nil
+                    :family Np3wFont :height Np3wFontSize)
 
 ;; Split window horizontally
 (unless (boundp 'np3w-window-setup-done)
@@ -51,7 +63,11 @@
 (defun back-to-indentation-or-beginning ()
   (interactive)
   (if (= (point) (progn (back-to-indentation) (point)))
-	  (beginning-of-line))
+      (beginning-of-line))
+  )
+
+(defun np3w-nothing ()
+  "Dont do anything"
   )
 
 ;; Keyboard shortcuts.
@@ -60,43 +76,45 @@
 (defvar np3w-keys-minor-mode-map
   (let ((map (make-sparse-keymap)))
 
-	;; Buffer navigation and finding files
+    ;; Buffer navigation and finding files
     (define-key map (kbd "M-i") 'find-file)
-	(define-key map (kbd "M-I") 'find-file-other-window)
-	(define-key map (kbd "M-b") 'ido-switch-buffer)
-	(define-key map (kbd "M-B") 'ido-switch-buffer-other-window)
-	(define-key map (kbd "M-a") 'np3w-other-window)
-	(define-key map (kbd "C-;") 'kill-this-buffer)
+    (define-key map (kbd "M-I") 'find-file-other-window)
+    (define-key map (kbd "M-b") 'ido-switch-buffer)
+    (define-key map (kbd "M-B") 'ido-switch-buffer-other-window)
+    (define-key map (kbd "M-a") 'np3w-other-window)
+    (define-key map (kbd "C-;") 'kill-this-buffer)
 
-	;; Saving
-	(define-key map (kbd "M-o") 'save-buffer)
-	
-	;; deletes tab character instead of untabifying it
-	(define-key map (kbd "DEL") 'backward-delete-char)
-	
-	;; Emacs auto indentation does not work very well sometimes. When that
-	;; happens C-tab can be used to insert the tab character
-	(define-key map [C-tab] (lambda () (interactive) (insert-char 9 1)))
-	
-	;; Killing and yanking(copy, cut and paste)
-	(define-key map (kbd "C-a") 'np3w-copy-whole-buffer)
-	(define-key map (kbd "C-.") 'yank)
-	(define-key map (kbd "C->") 'yank-pop)
+    ;; Saving
+    (define-key map (kbd "M-o") 'save-buffer)
+    
+    ;; deletes tab character instead of untabifying it
+    (define-key map (kbd "DEL") 'backward-delete-char)
+    
+    ;; Emacs auto indentation does not work very well sometimes. When that
+    ;; happens C-tab can be used to insert the a tab
+    (define-key map [C-tab] (lambda () (interactive) (insert "    ")))
+    
+    ;; Killing and yanking(copy, cut and paste)
+    (define-key map (kbd "C-a") 'np3w-copy-whole-buffer)
+    (define-key map (kbd "C-.") 'yank)
+    (define-key map (kbd "C->") 'yank-pop)
 
-	;; Line
-	(define-key map (kbd "C-k") 'kill-line)
-	(define-key map (kbd "C-o") 'kill-whole-line)
-	
-	;; Paragraphs
-	(define-key map [prior] 'backward-paragraph)
-	(define-key map [next] 'forward-paragraph)
+    ;; Line
+    (define-key map (kbd "C-k") 'kill-line)
+    (define-key map (kbd "C-o") 'kill-whole-line)
+    
+    ;; Paragraphs
+    (define-key map [prior] 'backward-paragraph)
+    (define-key map [next] 'forward-paragraph)
 
-	;; Jump to beginning of code instead of beginning of line
-	(define-key map (kbd "<home>") 'back-to-indentation-or-beginning)
+    ;; Jump to beginning of code instead of beginning of line
+    (define-key map (kbd "<home>") 'back-to-indentation-or-beginning)
+
+    (define-key map (kbd "C-j") 'np3w-nothing)
+    (define-key map (kbd "C-k") 'compile)
+    
     map)
   "my-keys-minor-mode keymap.")
-
-
 
 (define-minor-mode np3w-keys-minor-mode
   :init-value t
@@ -118,6 +136,9 @@
 
 ;; Add load path
 (add-to-list 'load-path LoadPathDirectory)
+
+;; Dont ask for compile command
+(setq compilation-read-command nil)
 
 ;; Make emacs not forget undo information
 (setq undo-limit 20000000)
@@ -141,19 +162,32 @@
 (when EnableEProject
   (require 'eproject)
   (require 'eproject-extras)
-  
+
+  ;; C++ project mode
+  (define-project-type c++ (generic)
+    (look-for "CMakeLists.txt")
+    ;;:relevant-files ("\\.cpp$" "\\.hpp$")
+    )
+  (add-hook 'c++-project-file-visit-hook
+            (lambda ()
+              (make-local-variable 'compile-command)
+              (setq compile-command (format "cd %s && ../build_project.sh" eproject-root))
+              )
+            )
+
+  ;; TODO: Remove the code below if I do not use it
   ;; Copied from the eproject github page
   (defmacro .emacs-curry (function &rest args)
-	`(lambda () (interactive)
-	   (,function ,@args)))
+    `(lambda () (interactive)
+       (,function ,@args)))
   
   (defmacro .emacs-eproject-key (key command)
-	(cons 'progn
-		  (loop for (k . p) in (list (cons key 4) (cons (upcase key) 1))
-				collect
-				`(global-set-key
-				  (kbd ,(format "M-p %s" k))
-				  (.emacs-curry ,command ,p)))))
+    (cons 'progn
+          (loop for (k . p) in (list (cons key 4) (cons (upcase key) 1))
+                collect
+                `(global-set-key
+                  (kbd ,(format "M-p %s" k))
+                  (.emacs-curry ,command ,p)))))
   
   (.emacs-eproject-key "k" eproject-kill-project-buffers)
   (.emacs-eproject-key "v" eproject-revisit-project)
@@ -167,17 +201,17 @@
 (when EnableCMakeIde
 
   ;; RTags setup
-  (require 'rtags)
+  ;;(require 'rtags)
 
+  ;;(global-set-key (kbd "C-b") 'rtags-find-symbol-at-point)
+  
   ;; Company mode
   (require 'company)
   (add-hook 'after-init-hook 'global-company-mode)
   
   ;; Flychecks setup
   (require 'flycheck)
-  
-  ;; Flycheck config
-  (global-flycheck-mode)
+  (add-hook 'after-init-hook 'global-flycheck-mode)
 
   ;; Irony setup
   (require 'irony)
@@ -189,10 +223,10 @@
   ;; replace the `completion-at-point' and `complete-symbol' bindings in
   ;; irony-mode's buffers by irony-mode's function
   (defun my-irony-mode-hook ()
-	(define-key irony-mode-map [remap completion-at-point]
-	  'irony-completion-at-point-async)
-	(define-key irony-mode-map [remap complete-symbol]
-	  'irony-completion-at-point-async))
+    (define-key irony-mode-map [remap completion-at-point]
+      'irony-completion-at-point-async)
+    (define-key irony-mode-map [remap complete-symbol]
+      'irony-completion-at-point-async))
   (add-hook 'irony-mode-hook 'my-irony-mode-hook)
   (add-hook 'irony-mode-hook 'irony-cdb-autosetup-compile-options)
 
@@ -209,6 +243,18 @@
 
 ;;
 ;;;;;;;;;;;;;;;;;;
+
+;;;;;;;
+;; SMIE
+
+(when EnableSMIE
+  (require 'smie)
+
+  
+  )
+
+;;
+;;;;;;;
 
 ;; Stuff
 (load-library "view")
@@ -228,20 +274,21 @@
 
 ;; Load themes folder
 (unless nil ThemesFolder
-		(add-to-list 'custom-theme-load-path ThemesFolder)
-		)
+        (add-to-list 'custom-theme-load-path ThemesFolder)
+        )
 
-;; Colored TODO: and NOTE:
-(setq fixme-modes '(c++-mode c-mode emacs-lisp-mode))
+;; Custom keywords
+(setq np3w-c-modes '(c++-mode c-mode emacs-lisp-mode))
 (make-face 'font-lock-fixme-face)
 (make-face 'font-lock-note-face)
 (mapc (lambda (mode)
-		(font-lock-add-keywords
-		 mode
-		 '(("\\<\\(TODO\\)" 1 'font-lock-fixme-face t)
-		   ("\\<\\(TODO:\\)" 1 'font-lock-fixme-face t)
-		   ("\\<\\(NOTE:\\)" 1 'font-lock-note-face t))))
-	  fixme-modes)
+        (font-lock-add-keywords
+         mode
+         '(("\\<\\(TODO\\)" 1 'font-lock-fixme-face t)
+           ("\\<\\(TODO:\\)" 1 'font-lock-fixme-face t)
+           ("\\<\\(NOTE:\\)" 1 'font-lock-note-face t)
+           ("\\<\\(nullptr\\)" 1 'font-lock-keyword-face t))))
+      np3w-c-modes)
 (modify-face 'font-lock-fixme-face "Red" nil nil t nil t nil nil)
 (modify-face 'font-lock-note-face "Dark Green" nil nil t nil t nil nil)
 
@@ -252,26 +299,26 @@
 
 ;; Auto mode
 (setq auto-mode-alist
-	  (append
-	   '(("\\.cpp$"	   . c++-mode)
-		 ("\\.hin$"	   . c++-mode)
-		 ("\\.cin$"	   . c++-mode)
-		 ("\\.inl$"	   . c++-mode)
-		 ("\\.rdc$"	   . c++-mode)
-		 ("\\.h$"	   . c++-mode)
- 		 ("\\.hpp$"	   . c++-mode)
-		 ("\\.c$"	   . c++-mode)
-		 ("\\.cc$"	   . c++-mode)
-		 ("\\.c8$"	   . c++-mode)
-		 ("\\.txt$"	   . indented-text-mode)
-		 ("\\.emacs$"  . emacs-lisp-mode)
-		 ("\\.gen$"	   . gen-mode)
-		 ("\\.ms$"	   . fundamental-mode)
-		 ("\\.m$"	   . objc-mode)
-		 ("\\.mm$"	   . objc-mode)
-		 '(("CMakeLists\\.txt\\'" . cmake-mode))
-		 '(("\\.cmake\\'"		  . cmake-mode))
-		 ) auto-mode-alist))
+      (append
+       '(("\\.cpp$" . c++-mode)
+     ("\\.hin$" . c++-mode)
+     ("\\.cin$" . c++-mode)
+     ("\\.inl$" . c++-mode)
+     ("\\.rdc$" . c++-mode)
+     ("\\.h$" . c++-mode)
+     ("\\.hpp$" . c++-mode)
+     ("\\.c$" . c++-mode)
+     ("\\.cc$" . c++-mode)
+     ("\\.c8$" . c++-mode)
+     ("\\.txt$" . indented-text-mode)
+     ("\\.emacs$" . emacs-lisp-mode)
+     ("\\.gen$" . gen-mode)
+     ("\\.ms$" . fundamental-mode)
+     ("\\.m$" . objc-mode)
+     ("\\.mm$" . objc-mode)
+     '(("CMakeLists\\.txt\\'" . cmake-mode))
+     '(("\\.cmake\\'"         . cmake-mode))
+     ) auto-mode-alist))
 
 ;; C++ indendetion style
 ;;(defconst np3w-cc-style
@@ -293,7 +340,7 @@
 
 ;; Dont split windows. Use existing windows instead
 (defun np3w-never-split-a-window
-	nil
+    nil
   )
 (setq split-window-preferred-function 'np3w-never-split-a-window)
 
@@ -317,8 +364,8 @@
 
 ;; Indentation settings
 (setq-default c-basic-offset 4
-			  tab-width 4
-			  indent-tabs-mode t)
+              tab-width 4
+              indent-tabs-mode nil)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Fix enum class indentation
@@ -378,23 +425,36 @@
 (interactive)
 (menu-bar-mode -1)
 
-;; Use dark backround
-(set-foreground-color "burlywood3")
-(set-background-color "#161616")
+(when EnableNp3wColorScheme
+  ;; Use dark backround
+  (set-foreground-color "burlywood3")
+  (set-background-color "#161616")
 
-;; Green cursor
-(set-cursor-color "#40FF40")
+  ;; Green cursor
+  (set-cursor-color "#40FF40")
 
-;; Change colors
-;;(set-face-attribute 'region nil :background "blue3")
-(set-face-attribute 'region nil :background "#202020")
+  ;; Change colors
+  ;;(set-face-attribute 'region nil :background "blue3")
+  (set-face-attribute 'region nil :background "#202020")
 
-(set-face-attribute 'font-lock-constant-face nil      :foreground "burlywood3")
-(set-face-attribute 'font-lock-keyword-face nil       :foreground "aquamarine2")
-(set-face-attribute 'font-lock-type-face nil          :foreground "LightGreen")
+  (set-face-attribute 'font-lock-constant-face nil      :foreground "burlywood3")
+  (set-face-attribute 'font-lock-keyword-face nil       :foreground "#c99e12")
 
-(set-face-attribute 'font-lock-function-name-face nil :foreground "LightGoldenrod3")
-(set-face-attribute 'font-lock-variable-name-face nil :foreground "LightGoldenrod3")
+  (set-face-attribute 'font-lock-type-face nil          :foreground "#7c8f46")
+  (set-face-attribute 'font-lock-function-name-face nil :foreground "burlywood3")
+  (set-face-attribute 'font-lock-variable-name-face nil :foreground "burlywood3")
 
-;; END
+  (set-face-attribute 'font-lock-comment-face nil       :foreground "#ababab")
+  (set-face-attribute 'font-lock-preprocessor-face nil  :foreground "#ababab")
 
+  (set-face-attribute 'font-lock-string-face nil        :foreground "#57a61c")
+
+  ;; Colored numbers
+  (add-hook 'after-change-major-mode-hook
+			'(lambda () (font-lock-add-keywords 
+						 nil 
+						 '(("\\([0-9]+\\)" 
+							1 font-lock-string-face)))))
+  )
+
+;; END of file. If there is any code below this it is generated by emacs
