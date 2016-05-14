@@ -24,18 +24,30 @@
 
 (setq EnableSMIE t)
 
+;; Set the default np3w color scheme
 ;; Possible values:
 ;;   "Dark"
 ;;   "BrighterDark"
 ;;   "2Colors"
 ;;   "None"
-(setq EnableNp3wColorScheme "2Colors")
+(setq Np3wColorScheme "BrighterDark")
 
 ;;(setq Np3wFont "outline-Liberation Mono")
 ;;(setq Np3wFont "outline-DejaVu Sans Mono")
 
 (setq Np3wFont "Liberation Mono")
 (setq Np3wFontSize 125)
+
+;; TODO(np3w): Compile command on windows
+(if (eq system-type 'gnu/linux)
+    (setq Np3wBuildCommand "build/build.sh")
+  )
+
+(defun np3w-set-build-command (build-command)
+  "Set the build command used to build projects"
+  (interactive "sEnter build command: ")
+  (setq Np3wBuildCommand build-command)
+  )
 
 ;;
 ;;;;;;;;;;;;;
@@ -60,8 +72,8 @@
   (message "Copied whole buffer")
   )
 
-(defun np3w-reload-init-file ()
-  "Reload the .emacs file"
+(defun np3w-re ()
+  "(np3w-reload) Reload the .emacs file"
   (interactive)
   (load-file "~/.emacs")
   )
@@ -83,8 +95,8 @@
   (let ((map (make-sparse-keymap)))
 
     ;; Buffer navigation and finding files
-    (define-key map (kbd "M-i") 'find-file)
-    (define-key map (kbd "M-I") 'find-file-other-window)
+    (define-key map (kbd "M-n") 'find-file)
+    (define-key map (kbd "M-N") 'find-file-other-window)
     (define-key map (kbd "M-b") 'ido-switch-buffer)
     (define-key map (kbd "M-B") 'ido-switch-buffer-other-window)
     (define-key map (kbd "M-a") 'np3w-other-window)
@@ -106,8 +118,11 @@
     (define-key map (kbd "C->") 'yank-pop)
 
     ;; Line
-    (define-key map (kbd "C-u") 'kill-line)
+    (define-key map (kbd "C-e") 'kill-line)
     (define-key map (kbd "C-o") 'kill-whole-line)
+
+    ;; Indentation
+    (define-key map (kbd "C-u") 'indent-region)
     
     ;; Paragraphs
     (define-key map [prior] 'backward-paragraph)
@@ -118,15 +133,29 @@
 
     (define-key map (kbd "C-j") 'next-error)
     (define-key map (kbd "C-k") 'compile)
+
+    ;; Having to write it in minibuffer is very annoying
+    (define-key map (kbd "M-/") 'np3w-re)
     
     map)
   "my-keys-minor-mode keymap.")
-
+  
 (define-minor-mode np3w-keys-minor-mode
   :init-value t
   :lighter " my-keys")
 
 (np3w-keys-minor-mode 1)
+
+(defun np3w-newline ()
+  (interactive)
+
+  (insert "\n")
+  (indent-for-tab-command)
+  )
+
+;; Cannot include it in my minor mode becuase it messes up the minibuffer which
+;; binds a special command to RET(overriden by my mode)
+(global-set-key (kbd "RET") 'np3w-newline)
 
 ;;
 
@@ -157,6 +186,8 @@
 (scroll-bar-mode -1)
 ;; Hide annoying toolbar
 (tool-bar-mode 0)
+;; Disable bell on windows
+(setq visible-bell 1)
 
 ;; Change emacs backup directory
 (setq backup-directory-alist `(("." . "~/EmacsBackups")))
@@ -177,7 +208,7 @@
   (add-hook 'c++-project-file-visit-hook
             (lambda ()
               (make-local-variable 'compile-command)
-              (setq compile-command (format "cd %s && ../build_project.sh" eproject-root))
+              (setq compile-command (format "cd %s && %s" eproject-root Np3wBuildCommand))
               )
             )
 
@@ -292,24 +323,26 @@
 (setq auto-mode-alist
       (append
        '(("\\.cpp$" . c++-mode)
-     ("\\.hin$" . c++-mode)
-     ("\\.cin$" . c++-mode)
-     ("\\.inl$" . c++-mode)
-     ("\\.rdc$" . c++-mode)
-     ("\\.h$" . c++-mode)
-     ("\\.hpp$" . c++-mode)
-     ("\\.c$" . c++-mode)
-     ("\\.cc$" . c++-mode)
-     ("\\.c8$" . c++-mode)
-     ("\\.txt$" . indented-text-mode)
-     ("\\.emacs$" . emacs-lisp-mode)
-     ("\\.gen$" . gen-mode)
-     ("\\.ms$" . fundamental-mode)
-     ("\\.m$" . objc-mode)
-     ("\\.mm$" . objc-mode)
-     '(("CMakeLists\\.txt\\'" . cmake-mode))
-     '(("\\.cmake\\'"         . cmake-mode))
-     ) auto-mode-alist))
+         ("\\.hin$" . c++-mode)
+         ("\\.cin$" . c++-mode)
+         ("\\.inl$" . c++-mode)
+         ("\\.rdc$" . c++-mode)
+         ("\\.h$" . c++-mode)
+         ("\\.hpp$" . c++-mode)
+         ("\\.c$" . c++-mode)
+         ("\\.cc$" . c++-mode)
+         ("\\.c8$" . c++-mode)
+         ("\\.txt$" . indented-text-mode)
+         ("\\.emacs$" . emacs-lisp-mode)
+         ("\\.gen$" . gen-mode)
+         ("\\.ms$" . fundamental-mode)
+         ("\\.m$" . objc-mode)
+         ("\\.mm$" . objc-mode)
+         ("\\.py$" . python-mode)
+         ("\\.java$" . java-mode)
+         '(("CMakeLists\\.txt\\'" . cmake-mode))
+         '(("\\.cmake\\'"         . cmake-mode))
+         ) auto-mode-alist))
 
 ;; C++ indendetion style
 ;;(defconst np3w-cc-style
@@ -416,136 +449,131 @@
 (interactive)
 (menu-bar-mode -1)
 
-(when (string= EnableNp3wColorScheme "Dark")
-  ;; Use dark backround
-  (set-foreground-color "burlywood3")
-  (set-background-color "#161616")
+;; Custom keywords
+(setq np3w-c-modes '(c++-mode c-mode emacs-lisp-mode))
+(make-face 'font-lock-fixme-face)
+(make-face 'font-lock-note-face)
+(mapc (lambda (mode)
+        (font-lock-add-keywords
+         mode
+         '(("\\<\\(FIXME\\|TODO\\|BUG\\)" 1 'font-lock-fixme-face t)
+           ("\\<\\(NOTE\\)" 1 'font-lock-note-face t)
+           ("\\<\\(nullptr\\)" 1 'font-lock-keyword-face t))))
+      np3w-c-modes)
 
-  ;; Green cursor
-  (set-cursor-color "#40FF40")
+;; Default values which can be changed by themes
+(modify-face 'font-lock-fixme-face "Red" nil nil t nil t nil nil)
+(modify-face 'font-lock-note-face "Dark Green" nil nil t nil t nil nil)
 
-  ;; Change colors
-  ;;(set-face-attribute 'region nil :background "blue3")
-  (set-face-attribute 'region nil :background "#202020")
+(defun np3w-theme (theme-string)
+  (interactive "sEnter theme name: ")
+  (when (string= theme-string "Dark")
+    ;; Use dark backround
+    (set-foreground-color "burlywood3")
+    (set-background-color "#161616")
 
-  (set-face-attribute 'font-lock-constant-face nil      :foreground "burlywood3")
-  (set-face-attribute 'font-lock-keyword-face nil       :foreground "#c99e12")
+    ;; Green cursor
+    (set-cursor-color "#40FF40")
 
-  (set-face-attribute 'font-lock-type-face nil          :foreground "#7c8f46")
-  (set-face-attribute 'font-lock-function-name-face nil :foreground "burlywood3")
-  (set-face-attribute 'font-lock-variable-name-face nil :foreground "burlywood3")
+    ;; Change colors
+    ;;(set-face-attribute 'region nil :background "blue3")
+    (set-face-attribute 'region nil :background "#202020")
 
-  (set-face-attribute 'font-lock-comment-face nil       :foreground "#ababab")
-  (set-face-attribute 'font-lock-preprocessor-face nil  :foreground "#ababab")
+    (set-face-attribute 'font-lock-constant-face nil      :foreground "burlywood3")
+    (set-face-attribute 'font-lock-keyword-face nil       :foreground "#c99e12")
 
-  (set-face-attribute 'font-lock-string-face nil        :foreground "#57a61c")
+    (set-face-attribute 'font-lock-type-face nil          :foreground "#7c8f46")
+    (set-face-attribute 'font-lock-function-name-face nil :foreground "burlywood3")
+    (set-face-attribute 'font-lock-variable-name-face nil :foreground "burlywood3")
 
-  ;; Colored numbers
-  (add-hook 'after-change-major-mode-hook
-			'(lambda () (font-lock-add-keywords 
-						 nil 
-						 '(("\\([0-9]+\\)" 
-							1 font-lock-string-face)))))
+    (set-face-attribute 'font-lock-comment-face nil       :foreground "#ababab")
+    (set-face-attribute 'font-lock-preprocessor-face nil  :foreground "#ababab")
 
-  ;; Custom keywords
-  (setq np3w-c-modes '(c++-mode c-mode emacs-lisp-mode))
-  (make-face 'font-lock-fixme-face)
-  (make-face 'font-lock-note-face)
-  (mapc (lambda (mode)
-          (font-lock-add-keywords
-           mode
-           '(("\\<\\(TODO\\)" 1 'font-lock-fixme-face t)
-             ("\\<\\(TODO:\\)" 1 'font-lock-fixme-face t)
-             ("\\<\\(NOTE:\\)" 1 'font-lock-note-face t)
-             ("\\<\\(nullptr\\)" 1 'font-lock-keyword-face t))))
-        np3w-c-modes)
-  (modify-face 'font-lock-fixme-face "Red" nil nil t nil t nil nil)
-  (modify-face 'font-lock-note-face "Dark Green" nil nil t nil t nil nil)
-  )
+    (set-face-attribute 'font-lock-string-face nil        :foreground "#57a61c")
 
-(when (string= EnableNp3wColorScheme "BrighterDark")
-  ;; Use dark backround
-  (setq np3w-foreground "D1B086")
-  
-  (set-foreground-color np3w-foreground)
-  (set-background-color "#242222")
+    (set-face-attribute 'font-lock-builtin-face nil       :foreground "#ababab")
 
-  ;; Green cursor
-  (set-cursor-color "#40FF40")
+    ;; Colored numbers
+    (add-hook 'after-change-major-mode-hook
+              '(lambda () (font-lock-add-keywords 
+                           nil 
+                           '(("\\([0-9]+\\)" 
+                              1 font-lock-string-face)))))
+    )
 
-  ;; Change colors
-  ;;(set-face-attribute 'region nil :background "blue3")
-  (set-face-attribute 'region nil :background "#202020")
+  (when (string= theme-string "BrighterDark")
+    ;; Use dark backround
+    (setq np3w-foreground "#D1B086")
+    
+    (set-foreground-color np3w-foreground)
+    (set-background-color "#242222")
 
-  (set-face-attribute 'font-lock-constant-face nil      :foreground np3w-foreground)
-  (set-face-attribute 'font-lock-keyword-face nil       :foreground "#D1A30D")
+    ;; Green cursor
+    (set-cursor-color "#40FF40")
 
-  (set-face-attribute 'font-lock-type-face nil          :foreground "#799624")
-  (set-face-attribute 'font-lock-function-name-face nil :foreground np3w-foreground)
-  (set-face-attribute 'font-lock-variable-name-face nil :foreground np3w-foreground)
+    ;; Change colors
+    ;;(set-face-attribute 'region nil :background "blue3")
+    (set-face-attribute 'region nil :background "#202020")
 
-  (set-face-attribute 'font-lock-comment-face nil       :foreground "#ababee")
-  (set-face-attribute 'font-lock-preprocessor-face nil  :foreground "#ababee")
+    (set-face-attribute 'font-lock-constant-face nil      :foreground np3w-foreground)
+    (set-face-attribute 'font-lock-keyword-face nil       :foreground "#D1A30D")
 
-  (set-face-attribute 'font-lock-string-face nil        :foreground "#64BF21")
+    (set-face-attribute 'font-lock-type-face nil          :foreground "#799624")
+    (set-face-attribute 'font-lock-function-name-face nil :foreground np3w-foreground)
+    (set-face-attribute 'font-lock-variable-name-face nil :foreground np3w-foreground)
 
-  ;; Colored numbers
-  (add-hook 'after-change-major-mode-hook
-			'(lambda () (font-lock-add-keywords 
-						 nil 
-						 '(("\\([0-9]+\\)" 
-							1 font-lock-string-face)))))
+    (set-face-attribute 'font-lock-comment-face nil       :foreground "#ababee")
+    (set-face-attribute 'font-lock-preprocessor-face nil  :foreground "#ababee")
 
-  ;; Custom keywords
-  (setq np3w-c-modes '(c++-mode c-mode emacs-lisp-mode))
-  (make-face 'font-lock-fixme-face)
-  (make-face 'font-lock-note-face)
-  (mapc (lambda (mode)
-          (font-lock-add-keywords
-           mode
-           '(("\\<\\(TODO\\)" 1 'font-lock-fixme-face t)
-             ("\\<\\(TODO:\\)" 1 'font-lock-fixme-face t)
-             ("\\<\\(NOTE:\\)" 1 'font-lock-note-face t)
-             ("\\<\\(nullptr\\)" 1 'font-lock-keyword-face t))))
-        np3w-c-modes)
-  (modify-face 'font-lock-fixme-face "Red" nil nil t nil t nil nil)
-  (modify-face 'font-lock-note-face "Dark Green" nil nil t nil t nil nil)
-  )
+    (set-face-attribute 'font-lock-string-face nil        :foreground "#64BF21")
+    
+    (set-face-attribute 'font-lock-builtin-face nil       :foreground "#ababab")
 
-(when (string= EnableNp3wColorScheme "2Colors")
-  ;; Use dark backround
-  (setq np3w-black "#000000")
-  (setq np3w-white "#cccccc")
-  
-  (set-foreground-color np3w-black)
-  (set-background-color np3w-white)
+    ;; Colored numbers
+    (add-hook 'after-change-major-mode-hook
+              '(lambda () (font-lock-add-keywords 
+                           nil 
+                           '(("\\([0-9]+\\)" 
+                              1 font-lock-string-face)))))
+    )
 
-  ;; Green cursor
-  (set-cursor-color "#444444")
-  
-  ;; Change colors
-  ;;(set-face-attribute 'region nil :background "blue3")
-  (set-face-attribute 'region nil :background "#9999a0")
+  (when (string= theme-string "2Colors")
+    ;; Use dark backround
+    (setq np3w-black "#000000")
+    (setq np3w-white "#cccccc")
+    
+    (set-foreground-color np3w-black)
+    (set-background-color np3w-white)
 
-  (set-face-attribute 'font-lock-constant-face nil      :foreground np3w-black)
-  (set-face-attribute 'font-lock-keyword-face nil       :foreground np3w-black)
+    ;; Green cursor
+    (set-cursor-color "#444444")
+    
+    ;; Change colors
+    ;;(set-face-attribute 'region nil :background "blue3")
+    (set-face-attribute 'region nil :background "#9999a0")
 
-  (set-face-attribute 'font-lock-type-face nil          :foreground np3w-black)
-  (set-face-attribute 'font-lock-function-name-face nil :foreground np3w-black)
-  (set-face-attribute 'font-lock-variable-name-face nil :foreground np3w-black)
+    (set-face-attribute 'font-lock-constant-face nil      :foreground np3w-black)
+    (set-face-attribute 'font-lock-keyword-face nil       :foreground np3w-black)
 
-  (set-face-attribute 'font-lock-comment-face nil       :foreground np3w-black)
-  (set-face-attribute 'font-lock-preprocessor-face nil  :foreground np3w-black)
+    (set-face-attribute 'font-lock-type-face nil          :foreground np3w-black)
+    (set-face-attribute 'font-lock-function-name-face nil :foreground np3w-black)
+    (set-face-attribute 'font-lock-variable-name-face nil :foreground np3w-black)
 
-  (set-face-attribute 'font-lock-string-face nil        :foreground np3w-black)
-  (set-face-attribute 'font-lock-builtin-face nil       :foreground np3w-black)
+    (set-face-attribute 'font-lock-comment-face nil       :foreground np3w-black)
+    (set-face-attribute 'font-lock-preprocessor-face nil  :foreground np3w-black)
+
+    (set-face-attribute 'font-lock-string-face nil        :foreground np3w-black)
+    (set-face-attribute 'font-lock-builtin-face nil       :foreground np3w-black)
 
     ;; Custom keywords
-  (setq np3w-c-modes '(c++-mode c-mode emacs-lisp-mode))
-  (make-face 'font-lock-fixme-face)
-  (make-face 'font-lock-note-face)
-  (modify-face 'font-lock-fixme-face np3w-black nil nil t nil t nil nil)
-  (modify-face 'font-lock-note-face np3w-black nil nil t nil t nil nil)
+    (modify-face 'font-lock-fixme-face np3w-black nil nil t nil t nil nil)
+    (modify-face 'font-lock-note-face np3w-black nil nil t nil t nil nil)
+    )
+  )
+
+(unless (boundp 'np3w-color-scheme-set)
+  (np3w-theme Np3wColorScheme)
+  (setq np3w-color-scheme-set t)
   )
 
 ;; END of file. If there is any code below this it is generated by emacs
