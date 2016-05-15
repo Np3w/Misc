@@ -34,8 +34,11 @@
 
 ;;(setq Np3wFont "outline-Liberation Mono")
 ;;(setq Np3wFont "outline-DejaVu Sans Mono")
+;;(setq Np3wFont "Liberation Mono")
 
-(setq Np3wFont "Liberation Mono")
+(setq Np3wCodeFont "Arial")
+(setq Np3wMonospaceFont "Liberation Mono")
+
 (setq Np3wFontSize 125)
 
 ;; TODO(np3w): Compile command on windows
@@ -55,8 +58,9 @@
 ;; Error message if all lisp code was not executed(there where errors)
 (setq initial-scratch-message "There were errors in .emacs file. Run emacs with --debug-init to debug")
 
+;; Set font face
 (set-face-attribute 'default nil
-                    :family Np3wFont :height Np3wFontSize)
+                    :family Np3wCodeFont :height Np3wFontSize)
 
 ;; Split window horizontally
 (unless (boundp 'np3w-window-setup-done)
@@ -86,6 +90,15 @@
 
 (defun np3w-nothing ()
   "Dont do anything"
+  )
+
+;; NOTE: Copied from emacs wiki
+(defun np3w-copy-whole-line (arg)
+  (interactive "p")
+  
+  (message "np3w-copy-whole-line")
+  (kill-ring-save (line-beginning-position) (line-beginning-position (+ 1 arg)))
+  (message "%d line%s copied" arg (if (= 1 arg) "" "s"))
   )
 
 ;; Keyboard shortcuts.
@@ -120,6 +133,7 @@
     ;; Line
     (define-key map (kbd "C-e") 'kill-line)
     (define-key map (kbd "C-o") 'kill-whole-line)
+    (define-key map (kbd "C-S-o") 'np3w-copy-whole-line)
 
     ;; Indentation
     (define-key map (kbd "C-u") 'indent-region)
@@ -186,8 +200,11 @@
 (scroll-bar-mode -1)
 ;; Hide annoying toolbar
 (tool-bar-mode 0)
+
 ;; Disable bell on windows
-(setq visible-bell 1)
+(if (eq system-type 'windows-nt)
+    (setq visible-bell 1)
+)
 
 ;; Change emacs backup directory
 (setq backup-directory-alist `(("." . "~/EmacsBackups")))
@@ -460,6 +477,16 @@
            ("\\<\\(NOTE\\)" 1 'font-lock-note-face t)
            ("\\<\\(nullptr\\)" 1 'font-lock-keyword-face t))))
       np3w-c-modes)
+
+;; Force monospace fonts in some modes
+(defun np3w-buffer-set-monospace-font ()
+  (interactive)
+  (message "Setting buffer face to Np3wMonospaceFont")
+  (setq buffer-face-mode-face `(:family ,Np3wMonospaceFont :height ,Np3wFontSize))
+  (buffer-face-mode)
+  )
+
+(add-hook 'compilation-mode-hook 'np3w-buffer-set-monospace-font)
 
 ;; Default values which can be changed by themes
 (modify-face 'font-lock-fixme-face "Red" nil nil t nil t nil nil)
