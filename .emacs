@@ -24,6 +24,8 @@
 
 (setq EnableSMIE t)
 
+(setq EnableShowParenMode t)
+
 ;; Set the default np3w color scheme
 ;; Possible values:
 ;;   "Dark"
@@ -200,6 +202,28 @@
 (scroll-bar-mode -1)
 ;; Hide annoying toolbar
 (tool-bar-mode 0)
+
+(when EnableShowParenMode
+  (require 'paren)
+  
+  (setq show-paren-delay 0.1)
+  (setq show-paren-style 'parenthesis)
+  (show-paren-mode 1)
+  (set-face-attribute 'show-paren-match-face nil :background nil :foreground "#aaa")
+
+  ;; (defadvice show-paren-function
+  ;;     (after show-matching-paren-offscreen activate)
+  ;;   "If the matching paren is offscreen, show the matching line in the
+  ;;       echo area. Has no effect if the character before point is not of
+  ;;       the syntax class ')'."
+  ;;   (interactive)
+  ;;   (let* ((cb (char-before (point)))
+  ;;          (matching-text (and cb
+  ;;                              (char-equal (char-syntax cb) ?\) )
+  ;;                              (blink-matching-open))))
+  ;;     (when matching-text (message matching-text)))
+  ;;   )
+  )
 
 ;; Disable bell on windows
 (if (eq system-type 'windows-nt)
@@ -384,9 +408,6 @@
     nil
   )
 (setq split-window-preferred-function 'np3w-never-split-a-window)
-
-;; Dont hightlight matching parenthesis
-(show-paren-mode 0)
 
 ;; Smooth scrolling
 (setq redisplay-dont-pause t)
