@@ -31,6 +31,7 @@
 ;;   "Dark"
 ;;   "BrighterDark"
 ;;   "2Colors"
+;;   "Solarized"
 ;;   "None"
 (setq Np3wColorScheme "BrighterDark")
 
@@ -152,6 +153,9 @@
 
     ;; Having to write it in minibuffer is very annoying
     (define-key map (kbd "M-/") 'np3w-re)
+    
+    ;; Mark
+    (define-key map (kbd "C-l") 'pop-global-mark)
     
     map)
   "my-keys-minor-mode keymap.")
@@ -587,13 +591,12 @@
 
   (when (string= theme-string "2Colors")
     ;; Use dark backround
-    (setq np3w-black "#000000")
+    (setq np3w-black "#2a2a2a")
     (setq np3w-white "#cccccc")
     
     (set-foreground-color np3w-black)
     (set-background-color np3w-white)
 
-    ;; Green cursor
     (set-cursor-color "#444444")
     
     ;; Change colors
@@ -616,6 +619,61 @@
     ;; Custom keywords
     (modify-face 'font-lock-fixme-face np3w-black nil nil t nil t nil nil)
     (modify-face 'font-lock-note-face np3w-black nil nil t nil t nil nil)
+    )
+  (when (string= theme-string "Solarized")
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;; Colors
+    
+    (setq s_base03    "#002b36")
+    (setq s_base02    "#073642")
+    (setq s_base01    "#586e75")
+    (setq s_base00    "#657b83")
+    (setq s_base0     "#839496")
+    (setq s_base1     "#93a1a1")
+    (setq s_base2     "#eee8d5")
+    (setq s_base3     "#fdf6e3")
+    (setq s_yellow    "#b58900")
+    (setq s_orange    "#cb4b16")
+    (setq s_red       "#dc322f")
+    (setq s_magenta   "#d33682")
+    (setq s_violet    "#6c71c4")
+    (setq s_blue      "#268bd2")
+    (setq s_cyan      "#2aa198")
+    (setq s_green     "#859900")
+    
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    
+    
+    (set-foreground-color s_base0)
+    (set-background-color s_base03)
+
+    (set-cursor-color s_base0)
+    
+    ;; Change colors
+    (set-face-attribute 'region nil :background s_base02)
+
+    (set-face-attribute 'font-lock-constant-face nil      :foreground s_cyan)
+    (set-face-attribute 'font-lock-keyword-face nil       :foreground s_green)
+
+    (set-face-attribute 'font-lock-type-face nil          :foreground s_yellow)
+    (set-face-attribute 'font-lock-function-name-face nil :foreground s_blue)
+    (set-face-attribute 'font-lock-variable-name-face nil :foreground s_blue)
+
+    (set-face-attribute 'font-lock-comment-face nil       :foreground s_base01)
+    (set-face-attribute 'font-lock-preprocessor-face nil  :foreground s_base01)
+
+    (set-face-attribute 'font-lock-string-face nil        :foreground s_cyan)
+    (set-face-attribute 'font-lock-builtin-face nil       :foreground s_green)
+    
+    (set-face-attribute 'compilation-warning nil          :foreground s_orange)
+    (set-face-attribute 'compilation-error nil            :foreground s_red)
+    
+    ;; Colored numbers
+    (add-hook 'after-change-major-mode-hook
+              '(lambda () (font-lock-add-keywords 
+                           nil 
+                           '(("\\([0-9]+\\)" 
+                              1 font-lock-string-face)))))
     )
   )
 
