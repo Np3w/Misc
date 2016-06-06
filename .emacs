@@ -35,14 +35,17 @@
 ;;   "None"
 (setq Np3wColorScheme "BrighterDark")
 
-;;(setq Np3wFont "outline-Liberation Mono")
-;;(setq Np3wFont "outline-DejaVu Sans Mono")
-;;(setq Np3wFont "Liberation Mono")
+;;(setq Np3wCodeFont "outline-Liberation Mono")
+;;(setq Np3wCodeFont "outline-DejaVu Sans Mono")
+;;(setq Np3wCodeFont "Liberation Mono")
 
-(setq Np3wCodeFont "Arial")
+;;(setq Np3wCodeFont "Hack")
+;;(setq Np3wCodeFont "Arial")
 (setq Np3wMonospaceFont "Liberation Mono")
+(setq Np3wCodeFont Np3wMonospaceFont)
 
-(setq Np3wFontSize 125)
+;;(setq Np3wFontSize 125)
+(setq Np3wFontSize 120)
 
 ;; TODO(np3w): Compile command on windows
 (if (eq system-type 'gnu/linux)
@@ -522,19 +525,19 @@
   (when (string= theme-string "Dark")
     ;; Use dark backround
     (set-foreground-color "burlywood3")
-    (set-background-color "#161616")
+    (set-background-color "#1a1a1a")
 
     ;; Green cursor
     (set-cursor-color "#40FF40")
 
     ;; Change colors
     ;;(set-face-attribute 'region nil :background "blue3")
-    (set-face-attribute 'region nil :background "#202020")
+    (set-face-attribute 'region nil :background "#2a2a2a")
 
     (set-face-attribute 'font-lock-constant-face nil      :foreground "burlywood3")
     (set-face-attribute 'font-lock-keyword-face nil       :foreground "#c99e12")
 
-    (set-face-attribute 'font-lock-type-face nil          :foreground "#7c8f46")
+    (set-face-attribute 'font-lock-type-face nil          :foreground "#burlywood3")
     (set-face-attribute 'font-lock-function-name-face nil :foreground "burlywood3")
     (set-face-attribute 'font-lock-variable-name-face nil :foreground "burlywood3")
 
@@ -551,6 +554,8 @@
                            nil 
                            '(("\\([0-9]+\\)" 
                               1 font-lock-string-face)))))
+    (modify-face 'font-lock-fixme-face "Red" nil nil t nil t nil nil)
+    (modify-face 'font-lock-note-face "Dark Green" nil nil t nil t nil nil)
     )
 
   (when (string= theme-string "BrighterDark")
@@ -587,6 +592,8 @@
                            nil 
                            '(("\\([0-9]+\\)" 
                               1 font-lock-string-face)))))
+    (modify-face 'font-lock-fixme-face "Red" nil nil t nil t nil nil)
+    (modify-face 'font-lock-note-face "Dark Green" nil nil t nil t nil nil)
     )
 
   (when (string= theme-string "2Colors")
@@ -656,17 +663,20 @@
     (set-face-attribute 'font-lock-keyword-face nil       :foreground s_green)
 
     (set-face-attribute 'font-lock-type-face nil          :foreground s_yellow)
-    (set-face-attribute 'font-lock-function-name-face nil :foreground s_blue)
-    (set-face-attribute 'font-lock-variable-name-face nil :foreground s_blue)
+    (set-face-attribute 'font-lock-function-name-face nil :foreground s_base0)
+    (set-face-attribute 'font-lock-variable-name-face nil :foreground s_base0)
 
     (set-face-attribute 'font-lock-comment-face nil       :foreground s_base01)
-    (set-face-attribute 'font-lock-preprocessor-face nil  :foreground s_base01)
+    (set-face-attribute 'font-lock-preprocessor-face nil  :foreground s_orange)
 
     (set-face-attribute 'font-lock-string-face nil        :foreground s_cyan)
     (set-face-attribute 'font-lock-builtin-face nil       :foreground s_green)
     
     (set-face-attribute 'compilation-warning nil          :foreground s_orange)
     (set-face-attribute 'compilation-error nil            :foreground s_red)
+    
+    (set-face-attribute 'font-lock-fixme-face nil         :foreground s_magenta)
+    
     
     ;; Colored numbers
     (add-hook 'after-change-major-mode-hook
