@@ -36,7 +36,7 @@
 ;;   "None"
 (setq Np3wColorScheme "Blue")
 ;; Should the color scheme be reloaded when loading the .emacs file?
-(setq Np3wReloadColorScheme t)
+(setq Np3wReloadColorScheme nil)
 
 ;;(setq Np3wCodeFont "outline-Liberation Mono")
 ;;(setq Np3wCodeFont "outline-DejaVu Sans Mono")
@@ -518,10 +518,6 @@
   )
 
 (add-hook 'compilation-mode-hook 'np3w-buffer-set-monospace-font)
-
-;; Default values which can be changed by themes
-(modify-face 'font-lock-fixme-face "Red" nil nil t nil t nil nil)
-(modify-face 'font-lock-note-face "Dark Green" nil nil t nil t nil nil)
 
 (defun np3w-theme (theme-string)
   (interactive "sEnter theme name: ")
