@@ -22,8 +22,6 @@
 ;; If true cmake-ide, irony and flychecks will be loaded
 (setq EnableCMakeIde nil)
 
-(setq EnableSMIE t)
-
 (setq EnableShowParenMode t)
 
 ;; Set the default np3w color scheme
@@ -43,9 +41,9 @@
 ;;(setq Np3wCodeFont "Liberation Mono")
 
 ;;(setq Np3wCodeFont "Hack")
-(setq Np3wCodeFont "Arial")
-;;(setq Np3wMonospaceFont "Liberation Mono")
-;;(setq Np3wCodeFont Np3wMonospaceFont)
+;;(setq Np3wCodeFont "Arial")
+(setq Np3wMonospaceFont "Liberation Mono")
+(setq Np3wCodeFont Np3wMonospaceFont)
 
 ;;(setq Np3wFontSize 125)
 (setq Np3wFontSize 120)
@@ -262,25 +260,6 @@
               (setq compile-command (format "cd %s && %s" eproject-root Np3wBuildCommand))
               )
             )
-
-  ;; TODO: Remove the code below if I do not use it
-  ;; Copied from the eproject github page
-  (defmacro .emacs-curry (function &rest args)
-    `(lambda () (interactive)
-       (,function ,@args)))
-  
-  (defmacro .emacs-eproject-key (key command)
-    (cons 'progn
-          (loop for (k . p) in (list (cons key 4) (cons (upcase key) 1))
-                collect
-                `(global-set-key
-                  (kbd ,(format "M-p %s" k))
-                  (.emacs-curry ,command ,p)))))
-  
-  (.emacs-eproject-key "k" eproject-kill-project-buffers)
-  (.emacs-eproject-key "v" eproject-revisit-project)
-  (.emacs-eproject-key "b" eproject-ibuffer)
-  (.emacs-eproject-key "o" eproject-open-all-project-files)
   )
 
 ;;;;;;;;;;;;;;;;;;
@@ -331,18 +310,6 @@
 
 ;;
 ;;;;;;;;;;;;;;;;;;
-
-;;;;;;;
-;; SMIE
-
-(when EnableSMIE
-  (require 'smie)
-
-  
-  )
-
-;;
-;;;;;;;
 
 ;; Stuff
 (load-library "view")
@@ -413,11 +380,54 @@
 
 (setq c-default-style "bsd")
 
+
 ;; Dont split windows. Use existing windows instead
 (defun np3w-never-split-a-window
     nil
   )
 (setq split-window-preferred-function 'np3w-never-split-a-window)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+
+;; Dont show the compilation buffer if there was no errors
+;; NOTE Copied from http://stackoverflow.com/questions/17659212/dont-display-compilation-buffer-in-emacs-until-the-process-exits-with-error-o
+;; and
+;; http://stackoverflow.com/questions/11043004/emacs-compile-buffer-auto-close
+
+(defun np3w-compile-finish (buffer outstr)
+  (unless (and
+           (string-match "finished" outstr)
+           (not
+            (with-current-buffer buffer
+              (goto-char 1)
+              (search-forward "warning" nil t)))
+           )
+    (switch-to-buffer-other-window buffer)
+    )
+  )
+(setq compilation-finish-functions 'np3w-compile-finish)
+(require 'cl)
+(defadvice compilation-start
+    (around inhibit-display
+            (command &optional mode name-function highlight-regexp)) 
+  (if (not (string-match "^\\(find\\|grep\\)" command))
+      ;; TODO: Emacs complains about this and tells me to replace it with
+      ;; cl-flet which breaks everything.
+      (flet ((display-buffer)
+             (set-window-point)
+             (goto-char)
+             )
+        (fset 'display-buffer 'ignore)
+        (fset 'goto-char 'ignore)
+        (fset 'set-window-point 'ignore)
+        (save-window-excursion ad-do-it))
+    ad-do-it)
+  )
+(ad-activate 'compilation-start)
+
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Smooth scrolling
 (setq redisplay-dont-pause t)
