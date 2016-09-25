@@ -1,0 +1,36 @@
+/*
+	Np3w's keybindings. For dvorak programmer keyboard layout.
+*/
+
+[
+	/* keybindings */
+
+	{ "keys": ["ctrl+shift+t"], "command": "toggle_tabs" },
+	{ "keys": ["ctrl+j"], "command": "next_result"},
+	{ "keys": ["ctrl+c"], "command": "toggle_side_bar" },
+	{ "keys": ["ctrl+k"], "command": "build"},
+	{ "keys": ["ctrl+b"], "command": "show_overlay", "args": {"overlay": "goto", "show_files": true} },
+	{ "keys": ["ctrl+w"], "command": "copy" },
+	{ "keys": ["ctrl+v"], "command": "paste" },
+	{ "keys": ["ctrl+x"], "command": "cut" },
+	{ "keys": ["ctrl+shift+w"], "command": "close" },
+	{ "keys": ["ctrl+r"], "command": "jump_back" },
+	{ "keys": ["ctrl+shift+r"], "command": "jump_forward" },
+	{ "keys": ["ctrl+,"], "command": "show_panel", "args": {"panel": "console", "toggle": true}},
+	/* end of keybindings */
+
+	/* origami settings */
+	{ 
+		"keys": ["ctrl+a"],
+		"command": "travel_to_pane", "args": {"direction": "right"}
+	},
+	{ 
+		"keys": ["ctrl+shift+a"],
+		"command": "travel_to_pane", "args": {"direction": "left"}
+	},
+	{
+		"keys": ["ctrl+/"],
+		"command": "destroy_pane", "args": {"direction": "self"}
+	},
+	/* end of origami settings */
+]
