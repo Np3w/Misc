@@ -28,6 +28,14 @@
 		"keys": ["ctrl+shift+a"],
 		"command": "travel_to_pane", "args": {"direction": "left"}
 	},
+	{ 
+		"keys": ["ctrl+;"],
+		"command": "travel_to_pane", "args": {"direction": "down"}
+	},
+	{ 
+		"keys": ["ctrl+shift+;"],
+		"command": "travel_to_pane", "args": {"direction": "up"}
+	},
 	{
 		"keys": ["ctrl+/"],
 		"command": "destroy_pane", "args": {"direction": "self"}
