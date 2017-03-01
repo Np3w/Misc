@@ -27,7 +27,7 @@ sleep 3
 if [ $XRECOVER = false ]; then
 	#Start programs
 	unclutter -idle 5&
-	#ktimer&
+	ktimer&
 	redshift -t 5500K:2000K &
 	nemo -n
 fi
@@ -36,3 +36,5 @@ fi
 xmodmap -e "keycode 94 = Escape"
 # increase keyboard repeat rate
 xset r rate 160 30
+
+
