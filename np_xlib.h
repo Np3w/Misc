@@ -80,15 +80,6 @@ in this Software without prior written authorization from The Open Group.
 ** TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 ** MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
 */
-/*
-** This header is generated from the Khronos OpenGL / OpenGL ES XML
-** API Registry. The current version of the Registry, generator scripts
-** used to make the header, and the header can be found at
-**   http://www.opengl.org/registry/
-**
-** Khronos $Revision: 32957 $ on $Date: 2016-06-09 17:03:08 -0400 (Thu, 09 Jun 2016) $
-*/
-
 
 #if defined(__cplusplus)
 extern "C" {
