@@ -28,12 +28,20 @@ if [ $XRECOVER = false ]; then
 	#Start programs
 	unclutter -idle 5&
 	ktimer&
-	redshift -t 5500K:2000K &
+	redshift -t 5500K:3000K &
 	nemo -n
 fi
 
-# remap button right of left shift on nordic keyboards to escape
+# remap button right of left shift on iso keyboards to escape
 xmodmap -e "keycode 94 = Escape"
+# Add åäö keys
+xmodmap -e "keycode 24 = semicolon colon 0x0 0x0 aring Aring"
+xmodmap -e "keycode 25 = period less 0x0 0x0 adiaeresis Adiaeresis"
+xmodmap -e "keycode 26 = period greater 0x0 0x0 0x0f6 0x0d6"
+# Special symbols
+xmodmap -e "keysym a = a A 0x0 0x0 aacute agrave"
+xmodmap -e "keysym e = e E 0x0 0x0 eacute egrave"
+xmodmap -e "keysym c = c C 0x0 0x0 ccedilla ccedilla"
 # increase keyboard repeat rate
 xset r rate 160 30
 
