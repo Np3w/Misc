@@ -35,29 +35,6 @@ if [ $XRECOVER = false ]; then
 	nemo -n
 fi
 
-# remap button right of left shift on iso keyboards to escape
-#xmodmap -e "keycode 94 = Escape"
-
-# Add åäö to keyboard
-#xmodmap -e "keycode 24 = semicolon colon 0x0 0x0 aring Aring"
-#xmodmap -e "keycode 25 = comma less 0x0 0x0 adiaeresis Adiaeresis"
-#xmodmap -e "keycode 26 = period greater 0x0 0x0 0x0f6 0x0d6"
-
-# á and à
-#xmodmap -e "keysym a = a A 0x0 0x0 aacute agrave"
-
-# é and è
-#xmodmap -e "keysym e = e E 0x0 0x0 eacute egrave"
-
-# ê and Ê 
-#xmodmap -e "keysym j = j J 0x0 0x0 ecircumflex Ecircumflex"
-
-# 
-#xmodmap -e "keysym u = u U 0x0 0x0 udiaeresis Udiaeresis"
-
-# ç
-#xmodmap -e "keysym c = c C 0x0 0x0 ccedilla ccedilla"
-
 ######################## Setup keyboard
 
 xmodmap -e "keycode   8 ="
