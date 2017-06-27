@@ -4,18 +4,29 @@
 ####
 # Read command line arguments
 XRECOVER=false
+# Terraria has a very annoying bug when the keyboard repeat rate is super high
+TERRARIA_MODE=false
 while [[ $# -gt 0 ]]
 do
-	case "$1" in --xrecover)
+key="$1"
+case $key in
+	--xrecover)
 	XRECOVER=true
 	shift
 	;;
-	*)
+
+	--terraria)
+	TERRARIA_MODE=true
+	shift
+	;;
+
 	# unknown option
+	*)
 	echo "Unknown argument $1"
 	exit 1
 	;;
-	esac
+esac
+shift
 done
 
 ####
@@ -40,6 +51,17 @@ fi
 echo "Setting up keyboard... (becuase xmodmap is SUPER SLOW this might take a while, ~20seconds on my computer)"
 sleep 0.1
 
+# These might need to be swapped for certain keyboards
+xmodmap -e "keycode  94 = apostrophe quotedbl z Z dead_acute dead_doubleacute"
+xmodmap -e "keycode  52 = Escape NoSymbol Escape"
+
+# These too
+#xmodmap -e "keycode  21 = numbersign grave equal plus dead_grave"
+#xmodmap -e "keycode  49 = dollar asciitilde grave asciitilde dead_tilde dead_tilde"
+
+xmodmap -e "keycode  49 = numbersign grave equal plus dead_grave"
+xmodmap -e "keycode  21 = dollar asciitilde grave asciitilde dead_tilde dead_tilde"
+
 # @todo Possible solution to this being super slow: write Xmodmap file and make Xmodmap read from it
 #xmodmap -e "keycode   8 ="
 xmodmap -e "keycode   9 = Escape NoSymbol Escape"
@@ -54,7 +76,8 @@ xmodmap -e "keycode  17 = parenright 2 8 asterisk onehalf"
 xmodmap -e "keycode  18 = plus 4 9 parenleft dead_grave"
 xmodmap -e "keycode  19 = bracketright 6 0 parenright"
 xmodmap -e "keycode  20 = exclam 8 minus underscore exclamdown U2E18"
-xmodmap -e "keycode  21 = numbersign grave equal plus dead_grave"
+
+
 xmodmap -e "keycode  22 = BackSpace BackSpace BackSpace BackSpace"
 xmodmap -e "keycode  23 = Tab ISO_Left_Tab Tab ISO_Left_Tab"
 xmodmap -e "keycode  24 = semicolon colon q Q aring Aring"
@@ -82,10 +105,11 @@ xmodmap -e "keycode  45 = t T k K thorn THORN"
 xmodmap -e "keycode  46 = n N l L ntilde Ntilde"
 xmodmap -e "keycode  47 = s S semicolon colon ssharp"
 xmodmap -e "keycode  48 = minus underscore apostrophe quotedbl hyphen endash"
-xmodmap -e "keycode  49 = dollar asciitilde grave asciitilde dead_tilde dead_tilde"
+
+
 xmodmap -e "keycode  50 = Shift_L NoSymbol Shift_L"
 xmodmap -e "keycode  51 = backslash bar backslash bar"
-xmodmap -e "keycode  52 = apostrophe quotedbl z Z dead_acute dead_doubleacute"
+
 xmodmap -e "keycode  53 = q Q x X"
 xmodmap -e "keycode  54 = j J c C ecircumflex Ecircumflex"
 xmodmap -e "keycode  55 = k K v V"
@@ -126,17 +150,17 @@ xmodmap -e "keycode  89 = KP_Next KP_3 KP_Next KP_3"
 xmodmap -e "keycode  90 = KP_Insert KP_0 KP_Insert KP_0"
 xmodmap -e "keycode  91 = KP_Delete KP_Decimal KP_Delete KP_Decimal"
 xmodmap -e "keycode  92 = ISO_Level3_Shift NoSymbol ISO_Level3_Shift"
-#xmodmap -e "keycode  93 ="
-xmodmap -e "keycode  94 = Escape NoSymbol Escape"
+
+
 xmodmap -e "keycode  95 = F11 F11 F11 F11 F11 F11 XF86Switch_VT_11 F11 F11 XF86Switch_VT_11"
 xmodmap -e "keycode  96 = F12 F12 F12 F12 F12 F12 XF86Switch_VT_12 F12 F12 XF86Switch_VT_12"
 #xmodmap -e "keycode  97 ="
-xmodmap -e "keycode  98 = Katakana NoSymbol Katakana"
-xmodmap -e "keycode  99 = Hiragana NoSymbol Hiragana"
-xmodmap -e "keycode 100 = Henkan_Mode NoSymbol Henkan_Mode"
-xmodmap -e "keycode 101 = Hiragana_Katakana NoSymbol Hiragana_Katakana"
-xmodmap -e "keycode 102 = Muhenkan NoSymbol Muhenkan"
-xmodmap -e "keycode 103 ="
+#xmodmap -e "keycode  98 = Katakana NoSymbol Katakana"
+#xmodmap -e "keycode  99 = Hiragana NoSymbol Hiragana"
+#xmodmap -e "keycode 100 = Henkan_Mode NoSymbol Henkan_Mode"
+#xmodmap -e "keycode 101 = Hiragana_Katakana NoSymbol Hiragana_Katakana"
+#xmodmap -e "keycode 102 = Muhenkan NoSymbol Muhenkan"
+#xmodmap -e "keycode 103 ="
 xmodmap -e "keycode 104 = KP_Enter NoSymbol KP_Enter"
 xmodmap -e "keycode 105 = Control_R NoSymbol Control_R"
 xmodmap -e "keycode 106 = KP_Divide KP_Divide KP_Divide KP_Divide KP_Divide KP_Divide XF86Ungrab KP_Divide KP_Divide XF86Ungrab"
@@ -296,5 +320,9 @@ echo "... done setting up keyboard"
 
 # increase keyboard repeat rate
 xset r rate 160 30
+
+if [ $TERRARIA_MODE = true ]; then
+	xset r rate 500 2
+fi
 
 
