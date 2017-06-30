@@ -8,26 +8,27 @@ XRECOVER=false
 TERRARIA_MODE=false
 while [[ $# -gt 0 ]]
 do
-key="$1"
-case $key in
-	--xrecover)
-	XRECOVER=true
-	shift
-	;;
+	key="$1"
+	case $key in
+		--xrecover)
+		XRECOVER=true
+		shift
+		;;
 
-	--terraria)
-	TERRARIA_MODE=true
-	shift
-	;;
+		--terraria)
+		TERRARIA_MODE=true
+		shift
+		;;
 
-	# unknown option
-	*)
-	echo "Unknown argument $1"
-	exit 1
-	;;
-esac
-shift
+		# unknown option
+		*)
+		echo "Unknown argument $1"
+		exit 1
+		;;
+	esac
 done
+
+echo "Terraria mode: $TERRARIA_MODE, X recover: $XRECOVER"
 
 ####
 # Actually do stuff
