@@ -1,5 +1,8 @@
 " Np3w's vim config
 
+" Neovim
+let $NVIM_TUI_ENABLE_TRUE_COLOR=1
+
 " Stuff
 :set relativenumber
 :set shiftround
@@ -8,6 +11,7 @@
 " Try to remove weird latency issues
 :set timeoutlen=1000
 :set ttimeoutlen=0
+:set lazyredraw
 
 " Move lines around
 :nnoremap - ddp
@@ -21,20 +25,70 @@
 :inoremap <c-c> <esc>viw~i
 :nnoremap <c-c> viw~
 
+:noremap <c-tab> :tabnext<enter>
+
 "nnoremap <c-b> 
 
 " Status line
 :set noruler
 :set laststatus=2
 
-:function MyStatusLine()
-:	let left = bufname("%")
-:	let w = winwidth(0)
-:	let right = printf("L%d C%-4d", line('.'), col('.'))
-:	let spacing = w - strchars(left) - strchars(right)
-:	return "". left . repeat(" ", spacing) . right
+:function! SyntaxItem()
+  :return synIDattr(synID(line("."),col("."),1),"name")
+:endfunction
+
+:function! MyStatusLine()
+	:let left = bufname("%"). " <syn> ". SyntaxItem()
+	:let w = winwidth(0)
+	:let right = printf("L%d C%-4d", line('.'), col('.'))
+	:let spacing = w - strchars(left) - strchars(right)
+	:return "". left . repeat(" ", spacing) . right
 :endfunction
 
 :hi statusline ctermbg=white ctermfg=black
 :set statusline=%!MyStatusLine()
+
+" Tab settings
+:set tabstop=2
+:set shiftwidth=2
+:set list
+:set listchars=tab:\|\ ,extends:›,precedes:‹,nbsp:·,trail:·
+"					hello
+
+" Setup colors
+
+" Enable 24 bit colors
+:set termguicolors
+
+" Does something
+:hi clear
+
+:set background=dark
+
+:hi SpecialKey ctermfg=gray ctermfg=gray guifg=#444444
+
+" Note: Based on GingerBill's Iridis colour scheme
+:hi Normal guibg=#2b303b guifg=#d2d7e0
+:hi LineNr guibg=#2b303b guifg=#d2d7e0
+:hi CursorLineNr guibg=#2b303b guifg=#d2d7e0
+:hi Type guifg=#40c0ff
+:hi Comment ctermfg=LightGray guifg=#6e7a94
+:hi Cursor guibg=#d2d7e0
+:hi lCursor guibg=#d2d7e0
+:hi String guifg=#b0ff22
+:hi Constant guifg=#ae81ff
+:hi Identifier guifg=#d2d7e0
+:hi Statement guifg=#ff3848
+:hi PreProc ctermfg=LightGray guifg=#6e7a94
+
+:hi cFormat guifg=#ff3e2e
+
+:hi! link cType Type
+:hi! link cCppString String
+
+" Keywords guifg=#ff3848
+
+:syntax enable
+
+
 
