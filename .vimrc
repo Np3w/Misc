@@ -1,40 +1,40 @@
 " Np3w's vim config
 
 " Stuff
-set relativenumber
-set shiftround
-set wrap
+:set relativenumber
+:set shiftround
+:set wrap
 
 " Try to remove weird latency issues
-set timeoutlen=1000
-set ttimeoutlen=0
+:set timeoutlen=1000
+:set ttimeoutlen=0
 
-" OLD STUFF BELOW
+" Move lines around
+:nnoremap - ddp
+:nnoremap _ ddkP
 
-" let s:editor_root=expand("~/.config/nvim")
+" Delete instead of cut
+:nnoremap x "_1dl
+:nnoremap <delete> "_dd
 
-" let &rtp = &rtp . ',' . s:editor_root . '/bundle/Vundle.vim'
+" Change case of current word
+:inoremap <c-c> <esc>viw~i
+:nnoremap <c-c> viw~
 
-" filetype off
+"nnoremap <c-b> 
 
-" call vundle#rc(s:editor_root . '/bundle/') 
+" Status line
+:set noruler
+:set laststatus=2
 
-" Plugin 'VundleVim/Vundle.vim'
+:function MyStatusLine()
+:	let left = bufname("%")
+:	let w = winwidth(0)
+:	let right = printf("L%d C%-4d", line('.'), col('.'))
+:	let spacing = w - strchars(left) - strchars(right)
+:	return "". left . repeat(" ", spacing) . right
+:endfunction
 
-" Plugin 'ctrlpvim/ctrlp.vim'
-" let g:ctrlp_map = '<c-b>'
+:hi statusline ctermbg=white ctermfg=black
+:set statusline=%!MyStatusLine()
 
-" Plugin 'scrooloose/nerdtree'
-" Plugin 'bling/vim-airline'
-
-" Colorscheme
-" syntax enable
-" set background=dark
-" Plugin 'flazz/vim-colorschemes'
-" colorscheme Benokai
-
-" set number
-
-" set colorcolumn=110
-" highlight ColorColumn ctermbg=darkgray
-" let &path.='src/include'
