@@ -25,9 +25,18 @@ let $NVIM_TUI_ENABLE_TRUE_COLOR=1
 :inoremap <c-c> <esc>viw~i
 :nnoremap <c-c> viw~
 
-:noremap <c-tab> :tabnext<enter>
+:nnoremap <c-n> :tabnext<enter>
 
-"nnoremap <c-b> 
+
+" Exit terminal mode shortcut
+:tnoremap <esc> <C-\><C-n><C-w>k
+
+" Build project
+:function! BuildProject()
+	:!./build.sh
+:endfunction
+
+:nnoremap <c-b> :call BuildProject()<enter>
 
 " Status line
 :set noruler
