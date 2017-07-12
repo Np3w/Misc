@@ -27,7 +27,6 @@ let $NVIM_TUI_ENABLE_TRUE_COLOR=1
 
 :nnoremap <c-n> :tabnext<enter>
 
-
 " Exit terminal mode shortcut
 :tnoremap <esc> <C-\><C-n><C-w>k
 
@@ -47,9 +46,12 @@ let $NVIM_TUI_ENABLE_TRUE_COLOR=1
 :endfunction
 
 :function! MyStatusLine()
-	:let left = bufname("%"). " <syn> ". SyntaxItem()
+	:let left = bufname("%")
 	:let w = winwidth(0)
-	:let right = printf("L%d C%-4d", line('.'), col('.'))
+	:let line_num = line('.')
+	:let col_num = col('.')
+	:let offset = line2byte(line_num) + col_num - 2
+	:let right = printf("L%d C%-4d (%06d)", line_num, col_num, offset)
 	:let spacing = w - strchars(left) - strchars(right)
 	:return "". left . repeat(" ", spacing) . right
 :endfunction
