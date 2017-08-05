@@ -1,0 +1,3 @@
+extensions = ".c.cpp.cc.h.hpp.sh";
+
+fkey_command_linux[4] = { "./build.sh", "*compilation*", true };
