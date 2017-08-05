@@ -414,6 +414,30 @@ START_HOOK_SIG(np3w_init){
     return(0);
 }
 
+OPEN_FILE_HOOK_SIG(np3w_new_file){
+    Buffer_Summary buffer = get_buffer(app, buffer_id, AccessOpen);
+    
+    int afterSlashP = buffer.file_name_len;
+    while(afterSlashP > 0 && buffer.file_name[afterSlashP - 1] != '/' && buffer.file_name[afterSlashP - 1] != '\\'){
+        afterSlashP -= 1;
+    }
+    
+    char buf[256];
+    sprintf(buf,
+            "/*\n"
+            "%.*s - \n"
+            "\n"
+            "*/\n"
+            "\n",
+            buffer.file_name_len - afterSlashP, buffer.file_name + afterSlashP);
+    
+    buffer_replace_range(app, &buffer, 0, 0, buf, strlen(buf));
+    
+    // no meaning for return
+    return(0);
+}
+
+
 #ifndef NO_BINDING
 extern "C" int32_t
 get_bindings(void *data, int32_t size){
@@ -424,6 +448,8 @@ get_bindings(void *data, int32_t size){
     default_keys(context);
     
     set_start_hook(context, np3w_init);
+    set_new_file_hook(context, np3w_new_file);
+    
     int32_t result = end_bind_helper(context);
     return(result);
 }
