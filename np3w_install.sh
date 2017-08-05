@@ -26,6 +26,16 @@ git config --global push.default simple
 echo "Installing 4coder starter program"
 sudo ln -sf ~/proj/Misc/4ed /usr/bin/4ed
 
+FCODER_DIR="$HOME/programs/4coder"
+if [ -d $FCODER_DIR ] ; then
+	echo "Compiling and installing 4coder configuration"
+	pushd 4coder/
+		./build.sh $FCODER_DIR
+	popd
+else
+	echo "4coder not installed in \"$FCODER_DIR\". Not installing 4coder configuration"
+fi
+
 # Download tools and libraries
 if [ ! -d ~/proj/np_libs ] ; then
 	git clone git@github.com:Np3w/Libs.git ~/proj/np_libs
