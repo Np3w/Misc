@@ -13,5 +13,5 @@ WARNING_FLAGS="-Wno-write-strings"
 FLAGS="-std=gnu++0x -fno-rtti -fno-exceptions -fPIC -shared -I $FCODER_DIR"
 
 echo "4coder/build.sh: Installing 4coder configuration to $FCODER_DIR/custom_4coder.so"
-gcc $WARNING_FLAGS $FLAGS $SCRIPT_DIR/np3w.cc -o $FCODER_DIR/custom_4coder.so
+gcc $WARNING_FLAGS $FLAGS $SCRIPT_DIR/4coder_np3w.cpp -o $FCODER_DIR/custom_4coder.so
 
