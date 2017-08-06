@@ -402,14 +402,15 @@ default_keys(Bind_Helper *context){
 
 START_HOOK_SIG(np3w_init){
     default_4coder_initialize(app);
-    default_4coder_side_by_side_panels(app, files, file_count);
+    //default_4coder_side_by_side_panels(app, files, file_count);
     
     if (automatically_load_project){
         load_project(app);
     }
     
     //np3w_set_colors(app, true);
-    change_theme(app, literal("Handmade Hero"));
+    //change_theme(app, literal("Handmade Hero"));
+    change_theme(app, literal("stb"));
     
     return(0);
 }
