@@ -1,7 +1,16 @@
 #!/bin/bash
 
+X_RES=`xdpyinfo | awk -F '[ x]+' '/dimensions:/{print $3}'`
+Y_RES=`xdpyinfo | awk -F '[ x]+' '/dimensions:/{print $4}'`
+
+FONT_SIZE=11
+
+if [ $X_RES -ge 2560 ] ; then
+	FONT_SIZE=12
+fi
+
 LOG_FILE="$HOME/4ed.log/4ed.`date +%Y-%m-%d.%H:%M:%S`.log"
 mkdir -p `dirname $LOG_FILE`
 
-daemonize -o $LOG_FILE ~/programs/4coder/4ed -f 11 "$@"
+daemonize -o $LOG_FILE ~/programs/4coder/4ed -f $FONT_SIZE "$@"
 
