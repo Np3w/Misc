@@ -9,6 +9,7 @@
 #
 # Please see http://i3wm.org/docs/userguide.html for a complete reference!
 
+
 set $mod Mod4
 
 # Font for window titles. Will also be used by the bar unless a different font
@@ -30,7 +31,7 @@ font pango:monospace 6
 floating_modifier $mod
 
 # start a terminal
-bindsym $mod+Return exec i3-sensible-terminal
+bindsym $mod+Return exec gnome-terminal
 
 # kill focused window
 bindsym $mod+Shift+q kill
@@ -172,6 +173,22 @@ mode "move" {
 	bindsym Return mode "default"
 	bindsym Escape mode "default"
 }
+
+# Stuff
+exec ~/proj/Misc/np3w_init.sh
+
+bindsym $mod+n mode "np3w"
+mode "np3w" {
+	bindsym x exec --no-startup-id "~/proj/Misc/np3w_init.sh --xrecover", mode "default"
+	bindsym t exec --no-startup-id "~/proj/Misc/np3w_init.sh --xrecover --terraria", mode "default"
+
+	bindsym Return mode "default"
+	bindsym Escape mode "default"
+}
+
+
+
+
 
 
 
