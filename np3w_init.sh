@@ -36,16 +36,16 @@ echo "Terraria mode: $TERRARIA_MODE, X recover: $XRECOVER"
 # Seems to fail sometimes without the sleep
 sleep 2
 
-if [ $XRECOVER = false ]; then
+#if [ $XRECOVER = false ]; then
 	# Program that hides mouse pointer if it is not moving
-	unclutter -idle 5&
+	#unclutter -idle 5&
 	# Timer program
-	ktimer&
+	#ktimer&
 	# Blue light filter
-	redshift -t 5500K:2750K &
+	#redshift -t 5500K:2750K &
 	# Desktop icons
-	nemo -n
-fi
+	#nemo -n
+#fi
 
 ######################## Setup keyboard
 
