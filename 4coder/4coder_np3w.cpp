@@ -208,6 +208,22 @@ CUSTOM_COMMAND_SIG(np3w_execute_arbitrary_command){
 }
 
 
+CUSTOM_COMMAND_SIG(np3w_delete_until_end_of_line){
+    View_Summary view = get_active_view(app, AccessOpen);
+    Buffer_Summary buffer = get_buffer(app, view.buffer_id, AccessOpen);
+    
+    Partition *part = &global_part;
+    
+    
+    
+    int32_t start = view.cursor.pos;
+    int32_t end = buffer_get_line_end(app, &buffer, view.cursor.line) + 1;
+    
+    buffer_replace_range(app, &buffer, start, end, 0, 0);
+    
+    
+}
+
 void
 default_keys(Bind_Helper *context){
     begin_map(context, mapid_global);
@@ -227,7 +243,7 @@ default_keys(Bind_Helper *context){
     bind(context, 'h', MDFR_CTRL, project_go_to_root_directory);
     
     bind(context, 'c', MDFR_ALT, open_color_tweaker);
-    bind(context, 'd', MDFR_ALT, open_debug);
+    //bind(context, 'd', MDFR_ALT, open_debug);
     
     bind(context, '.', MDFR_ALT, change_to_build_panel);
     bind(context, ',', MDFR_ALT, close_build_panel);
@@ -362,7 +378,11 @@ default_keys(Bind_Helper *context){
     bind(context, ' ', MDFR_CTRL, set_mark);
     bind(context, 'a', MDFR_CTRL, replace_in_range);
     bind(context, 'c', MDFR_CTRL, copy);
+    
     bind(context, 'd', MDFR_CTRL, delete_range);
+    bind(context, 'D', MDFR_CTRL, np3w_delete_until_end_of_line);
+    bind(context, 'D', MDFR_ALT, delete_line);
+    
     bind(context, 'e', MDFR_CTRL, center_view);
     bind(context, 'E', MDFR_CTRL, left_adjust_view);
     bind(context, 'f', MDFR_CTRL, search);
