@@ -11,6 +11,146 @@ TYPE: 'build-target'
 
 #include "4coder_default_include.cpp"
 
+
+
+/* BEGIN CODE BASED ON https://4coder.handmade.network/forums/t/2421-%5Bsolved%5D_need_help_implementing_shift_based_selection */
+
+bool cro_selection_active = false;
+CUSTOM_COMMAND_SIG(cro_selection_abort) {
+    View_Summary view = get_active_view(app, AccessProtected);
+    view_set_highlight(app, &view, 0, 0, false);
+    cro_selection_active = false;
+}
+void cro_selection_cont(Application_Links* app, Custom_Command_Function wrapped_func) {
+    bool was_active = cro_selection_active;
+    if (!cro_selection_active) {
+        cro_selection_active = true;
+        set_mark(app);
+    }
+    wrapped_func(app);
+    View_Summary view = get_active_view(app, AccessProtected);
+    Range range = get_range(&view);
+    int32_t pos = view.cursor.character_pos;
+    view_set_highlight(app, &view, range.min, range.max, true);
+    view_set_cursor(app, &view, seek_character_pos(pos), 1);
+    center_view(app); /// because for some reason when you select move down the buffer doesn't scroll with your...
+    
+}
+void cro_selection_delete_or_cmd(Application_Links* app, Custom_Command_Function wrapped_func) {
+    if (cro_selection_active) {
+        View_Summary view = get_active_view(app, AccessProtected);
+        Range range = get_range(&view);
+        Buffer_Summary buffer = get_buffer(app, view.buffer_id, AccessOpen);
+        buffer_replace_range(app, &buffer, range.min, range.max, 0, 0);
+        cro_selection_abort(app);
+    } else {
+        if (wrapped_func) wrapped_func(app);
+    }
+}
+CUSTOM_COMMAND_SIG(cro_selection_write_character){
+    uint32_t access = AccessOpen;
+    View_Summary view = get_active_view(app, access);
+    
+    User_Input in = get_command_input(app);
+    
+    uint8_t character[4];
+    uint32_t length = to_writable_character(in, character);
+    if (length != 0){
+        Buffer_Summary buffer = get_buffer(app, view.buffer_id, access);
+        int32_t pos = view.cursor.pos;
+        
+        Marker next_cursor_marker = {0};
+        next_cursor_marker.pos = character_pos_to_pos(app, &view, &buffer, view.cursor.character_pos);
+        next_cursor_marker.lean_right = true;
+        
+        Marker_Handle handle = buffer_add_markers(app, &buffer, 1);
+        buffer_set_markers(app, &buffer, handle, 0, 1, &next_cursor_marker);
+        
+        if(cro_selection_active) {
+            Range range = get_range(&view);
+            buffer_replace_range(app, &buffer, range.min, range.max,  (char*)character, length);
+            cro_selection_abort(app);
+        } else {
+            buffer_replace_range(app, &buffer, pos, pos, (char*)character, length);
+        }
+        
+        buffer_get_markers(app, &buffer, handle, 0, 1, &next_cursor_marker);
+        buffer_remove_markers(app, &buffer, handle);
+        
+        view_set_cursor(app, &view, seek_pos(next_cursor_marker.pos), true);
+    }
+}
+
+/* END */
+
+/* BEGIN CODE COPIED FROM https://4coder.handmade.network/forums/t/2430-made_a_comment_toggle_command */
+
+CUSTOM_COMMAND_SIG(cro_comment_toggle){
+    View_Summary view = get_active_view(app, AccessOpen);    
+    Buffer_Summary buffer = get_buffer(app, view.buffer_id, AccessOpen);
+    
+    if(cro_selection_active) {
+        int min_line, max_line;
+        if (view.cursor.line > view.mark.line) {
+            min_line = view.mark.line;
+            max_line = view.cursor.line;
+            if (view.cursor.character == 1) max_line--;
+        } else {
+            max_line = view.mark.line;
+            min_line = view.cursor.line; 
+            if (view.mark.character == 1) max_line--;
+        }
+        
+        
+        bool is_commenting = false;
+        for(int line_number=min_line; line_number<=max_line; line_number++) {
+            int pos = buffer_get_line_start(app, &buffer, line_number);
+            char line_start[2];
+            if (buffer_read_range(app, &buffer, pos, pos+2, line_start)) {
+                if (!(line_start[0]=='/' && line_start[1]=='/')) {is_commenting=true; break; }
+            }
+        }
+        for(int line_number=min_line; line_number<=max_line; line_number++) {
+            int pos = buffer_get_line_start(app, &buffer, line_number);
+            if (is_commenting) {
+                buffer_replace_range(app, &buffer, pos, pos, "//", 2);
+            } else {
+                buffer_replace_range(app, &buffer, pos, pos+2, 0, 0);
+            }
+        }
+        if (view.cursor.line > view.mark.line) {
+            int min_pos = buffer_get_line_start(app, &buffer, min_line);
+            int max_pos = buffer_get_line_end  (app, &buffer, max_line);
+            view_set_cursor(app, &view, seek_pos(min_pos), true);
+            view_set_mark  (app, &view, seek_pos(max_pos));
+            view_set_highlight(app, &view, min_pos, max_pos, true);
+        } else {
+            int min_pos = buffer_get_line_start(app, &buffer, min_line);
+            int max_pos = buffer_get_line_end  (app, &buffer, max_line);
+            view_set_mark  (app, &view, seek_pos(max_pos));
+            view_set_cursor(app, &view, seek_pos(min_pos), true);
+            view_set_highlight(app, &view, min_pos, max_pos, true);
+        }
+    } else {
+        auto pos = seek_line_beginning(app, &buffer, view.cursor.pos);
+        char line_start[2];
+        buffer_read_range(app, &buffer, pos, pos+2, line_start);
+        if (line_start[0]=='/' && line_start[1]=='/') {
+            buffer_replace_range(app, &buffer, pos, pos+2, 0, 0);
+        } else {
+            buffer_replace_range(app, &buffer, pos, pos, "//", 2);
+        }
+    }
+}
+
+/* END OF COPIED CODE */
+
+
+
+
+
+
+
 static void swap_uint32(uint32_t *a, uint32_t *b){
     uint32_t tmp = *a;
     *a = *b;
@@ -374,6 +514,7 @@ default_keys(Bind_Helper *context){
     // into a buffer. If the code for the key is not an enum
     // value such as key_left or key_back then it is a vanilla key.
     // It is possible to override this binding for individual keys.
+    
     bind_vanilla_keys(context, write_character);
     
     // NOTE(allen|a4.0.7): You can now bind left and right clicks.
@@ -442,16 +583,21 @@ default_keys(Bind_Helper *context){
     bind(context, 'l', MDFR_CTRL, toggle_line_wrap);
     bind(context, 'm', MDFR_CTRL, cursor_mark_swap);
     bind(context, 'O', MDFR_CTRL, reopen);
+    
     bind(context, 'q', MDFR_CTRL, query_replace);
     bind(context, 'Q', MDFR_CTRL, query_replace_identifier);
+    
     bind(context, 'r', MDFR_CTRL, reverse_search);
     bind(context, 's', MDFR_CTRL, save);
     bind(context, 't', MDFR_CTRL, search_identifier);
     bind(context, 'T', MDFR_CTRL, list_all_locations_of_identifier);
     bind(context, 'u', MDFR_CTRL, to_uppercase);
+    
     bind(context, 'v', MDFR_CTRL, paste_and_indent);
     bind(context, 'v', MDFR_ALT, toggle_virtual_whitespace);
     bind(context, 'V', MDFR_CTRL, paste_next_and_indent);
+    
+    
     
     bind(context, 'y', MDFR_CTRL, redo);
     bind(context, 'z', MDFR_CTRL, undo);
@@ -464,6 +610,57 @@ default_keys(Bind_Helper *context){
     bind(context, '\n', MDFR_NONE, newline_or_goto_position);
     bind(context, '\n', MDFR_SHIFT, newline_or_goto_position_same_panel);
     bind(context, ' ', MDFR_SHIFT, write_character);
+    
+    
+    
+    /* Croepha selection bindings */
+    
+    bind_vanilla_keys(context, cro_selection_write_character);
+    
+    
+#define __(_k, _m, _f) \
+    bind(context, _k, _m|MDFR_SHIFT, [](Application_Links* app){cro_selection_cont(app, _f);}); \
+    bind(context, _k, _m, [](Application_Links* app){cro_selection_abort(app); _f(app);})
+    __(key_left,      MDFR_NONE, move_left);
+    __(key_right,     MDFR_NONE, move_right);
+    __(key_up,        MDFR_NONE, move_up);
+    __(key_down,      MDFR_NONE, move_down);
+    __(key_end,       MDFR_NONE, seek_end_of_line);
+    __(key_home,      MDFR_NONE, seek_beginning_of_line);
+    __(key_page_up,   MDFR_NONE, page_up);
+    __(key_page_down, MDFR_NONE, page_down);
+    __(key_right,     MDFR_CTRL|MDFR_ALT, seek_whitespace_right);
+    __(key_left,      MDFR_CTRL|MDFR_ALT, seek_whitespace_left);
+    __(key_right,     MDFR_CTRL, seek_token_right); // ?
+    __(key_left,      MDFR_CTRL, seek_token_left); // ?
+    __(key_right,     MDFR_ALT,  seek_white_or_token_right);
+    __(key_left,      MDFR_ALT,  seek_white_or_token_left);
+    __(key_up,        MDFR_CTRL, seek_whitespace_up_end_line);
+    __(key_down,      MDFR_CTRL, seek_whitespace_down_end_line);
+    __(key_up,        MDFR_ALT,  move_up_10);
+    __(key_down,      MDFR_ALT,  move_down_10);
+#undef __
+    
+    //    bind(context, key_del, MDFR_SHIFT, delete_char);
+    bind(context, key_back, MDFR_NONE, [](Application_Links* app){
+         cro_selection_delete_or_cmd(app, backspace_char);
+         });
+    bind(context, key_del, MDFR_NONE, [](Application_Links* app){
+         cro_selection_delete_or_cmd(app, delete_char);
+         });
+    bind(context, key_esc, MDFR_NONE, cro_selection_abort);         
+    bind(context, 'x', MDFR_CTRL, [](Application_Links* app){
+         cut(app);
+         cro_selection_abort(app);
+         });
+    bind(context, 'v', MDFR_CTRL, [](Application_Links* app){
+         cro_selection_delete_or_cmd(app, NULL);
+         paste_and_indent(app);
+         });
+    
+    bind(context, ' ', MDFR_SHIFT, cro_selection_write_character);
+    
+    /* End of Croepha selection bindings */
     
     end_map(context);
 }
