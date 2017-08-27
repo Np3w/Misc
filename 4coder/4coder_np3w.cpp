@@ -132,7 +132,12 @@ CUSTOM_COMMAND_SIG(cro_comment_toggle){
             view_set_highlight(app, &view, min_pos, max_pos, true);
         }
     } else {
-        auto pos = seek_line_beginning(app, &buffer, view.cursor.pos);
+        
+        
+        auto pos = buffer_get_line_start(app, &buffer, view.cursor.line); // - Np3w
+        //auto pos = seek_line_beginning(app, &buffer, view.cursor.pos);
+        
+        
         char line_start[2];
         buffer_read_range(app, &buffer, pos, pos+2, line_start);
         if (line_start[0]=='/' && line_start[1]=='/') {
@@ -580,7 +585,9 @@ default_keys(Bind_Helper *context){
     bind(context, 'g', MDFR_CTRL, goto_line);
     bind(context, 'j', MDFR_CTRL, to_lowercase);
     bind(context, 'K', MDFR_CTRL, kill_buffer);
-    bind(context, 'l', MDFR_CTRL, toggle_line_wrap);
+    
+    
+    
     bind(context, 'm', MDFR_CTRL, cursor_mark_swap);
     bind(context, 'O', MDFR_CTRL, reopen);
     
@@ -594,9 +601,15 @@ default_keys(Bind_Helper *context){
     bind(context, 'u', MDFR_CTRL, to_uppercase);
     
     bind(context, 'v', MDFR_CTRL, paste_and_indent);
-    bind(context, 'v', MDFR_ALT, toggle_virtual_whitespace);
+    
+    
     bind(context, 'V', MDFR_CTRL, paste_next_and_indent);
     
+    
+    
+    // Toggle stuff
+    bind(context, 'v', MDFR_ALT, toggle_virtual_whitespace);
+    bind(context, 'l', MDFR_ALT, toggle_line_wrap);
     
     
     bind(context, 'y', MDFR_CTRL, redo);
@@ -610,8 +623,6 @@ default_keys(Bind_Helper *context){
     bind(context, '\n', MDFR_NONE, newline_or_goto_position);
     bind(context, '\n', MDFR_SHIFT, newline_or_goto_position_same_panel);
     bind(context, ' ', MDFR_SHIFT, write_character);
-    
-    
     
     /* Croepha selection bindings */
     
@@ -661,6 +672,10 @@ default_keys(Bind_Helper *context){
     bind(context, ' ', MDFR_SHIFT, cro_selection_write_character);
     
     /* End of Croepha selection bindings */
+    
+    /* Croepha comment toggle bindings */
+    bind(context, 'l', MDFR_CTRL, cro_comment_toggle);
+    /* End of Croepha comment toggle bindings */
     
     end_map(context);
 }
