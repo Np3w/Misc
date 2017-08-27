@@ -1,6 +1,6 @@
 /*
-4coder_default_bidings.cpp - Supplies the default bindings used for default 4coder behavior.
-
+ 4coder_np3w - Np3w's 4coder configuration
+ 
 TYPE: 'build-target'
 */
 
@@ -10,6 +10,245 @@ TYPE: 'build-target'
 #define FCODER_DEFAULT_BINDINGS
 
 #include "4coder_default_include.cpp"
+
+
+/* BEGIN BOOKMARKS CODE */
+
+#include <stdarg.h>
+
+static uint32_t npStringMatchScore(char *a, uint32_t a_len, char *b, uint32_t b_len){
+    uint32_t score = 0;
+    
+    char *a_iter = a;
+    char *a_end = a + a_len;
+    
+    char *b_iter = b;
+    char *b_end = b + b_len;
+    
+    while(a_iter < a_end && b_iter < b_end){
+        if(*a_iter == *b_iter){
+            score += 1;
+            
+            a_iter += 1;
+            b_iter += 1;
+        }else{
+            b_iter += 1;
+        }
+    }
+    return score;
+}
+
+static void npPrint(Application_Links *app, const char *format, ...){
+    char buffer[5000];
+    va_list list;
+    va_start(list, format);
+    
+    vsnprintf(buffer, sizeof(buffer), format, list);
+    
+    va_end(list);
+    
+    print_message(app, buffer, strlen(buffer));
+    
+    print_message(app, "\n", 1);
+}
+
+struct NpBookmark{
+    bool active;
+    
+#if 0
+    int32_t line;
+    char bufName[512];
+#else
+    Marker_Handle marker; // @todo Marker lifetimes?
+#endif
+    
+    char bookmarkName[512];
+};
+
+NpBookmark npBookmarks[256];
+
+#define npArrayLength(_array_) (sizeof(_array_) / sizeof((_array_)[0]))
+#define npForRange(_i_, _count_) for(int _i_ = 0; _i_ < (_count_); _i_ += 1)
+
+static void npSetBookmark(Application_Links *app, Buffer_Summary *buffer, int32_t pos, int32_t line){
+    npPrint(app, "Setting bookmark at %.*s:%d", buffer->buffer_name_len, buffer->buffer_name, line);
+    
+    bool found = false;
+    npForRange(i, npArrayLength(npBookmarks)){
+        if(!npBookmarks[i].active){
+            found = true;
+            
+            npBookmarks[i].active = true;
+            
+            npBookmarks[i].marker = buffer_add_markers(app, buffer, /*markerCount=*/1);
+            Marker srcMarker = { pos, /*lean right*/false };
+            buffer_set_markers(app, buffer, npBookmarks[i].marker, /*index, count*/0, 1, &srcMarker);
+            
+            snprintf(npBookmarks[i].bookmarkName, sizeof(npBookmarks[i].bookmarkName), "%.*s:%d", buffer->buffer_name_len, buffer->buffer_name, line);
+            break;
+        }
+    }
+    if(!found){
+        npPrint(app, "**** npBookmarks: ERROR: Ran out of space for more bookmarks");
+    }
+}
+
+CUSTOM_COMMAND_SIG(np_set_bookmark_at_cursor){
+    View_Summary view = get_active_view(app, AccessOpen);
+    Buffer_Summary buffer = get_buffer(app, view.buffer_id, AccessOpen);
+    npSetBookmark(app, &buffer, view.cursor.pos, view.cursor.line);
+}
+
+struct npSearchBookmarkItem{
+    NpBookmark *bookmark;
+    uint32_t score;
+};
+
+static int npCompareSearchItems(const void *_a, const void *_b){
+    npSearchBookmarkItem *a = (npSearchBookmarkItem*)_a;
+    npSearchBookmarkItem *b = (npSearchBookmarkItem*)_b;
+    
+    if(a->score < b->score){
+        return 1;
+    }else if(a->score > b->score){
+        return -1;
+    }else{
+        return 0;
+    }
+}
+
+static void npSearchBookmarks(Application_Links *app, NpBookmark **results, int resultCount, String search){
+    npSearchBookmarkItem items[npArrayLength(npBookmarks)] = {};
+    
+    npForRange(i, npArrayLength(npBookmarks)){
+        items[i].bookmark = (npBookmarks[i].active) ? (&npBookmarks[i]) : (nullptr);
+        
+        if(items[i].bookmark){
+            // Calculate the score
+            items[i].score = npStringMatchScore(search.str, search.size, items[i].bookmark->bookmarkName, strlen(items[i].bookmark->bookmarkName));
+            
+            npPrint(app, "npSearchBookmarks:   %s -> %d", items[i].bookmark->bookmarkName, items[i].score);
+        }
+    }
+    
+    qsort(items, npArrayLength(items), sizeof(items[0]), npCompareSearchItems);
+    
+    npForRange(i, resultCount){
+        results[i] = (i < npArrayLength(items)) ? (items[i].bookmark) : (nullptr);
+    }
+}
+
+CUSTOM_COMMAND_SIG(np_interactive_goto_bookmark){
+    Query_Bar results[7];
+    char resultTexts[7][256];
+    
+    npForRange(i, npArrayLength(results)){
+        results[i].prompt = make_lit_string(": ");
+        results[i].string = make_fixed_width_string(resultTexts[i]);
+        
+        start_query_bar(app, &results[i], 0);
+    }
+    
+    Query_Bar bar;
+    char stringBuffer[256];
+    bar.prompt = make_lit_string("");
+    bar.string = make_fixed_width_string(stringBuffer);
+    
+    if(start_query_bar(app, &bar, 0)){
+        while(1){
+            NpBookmark *searchResults[npArrayLength(results)];
+            npSearchBookmarks(app, searchResults, npArrayLength(searchResults), bar.string);
+            npForRange(i, npArrayLength(results)){
+                int resultIndex = npArrayLength(results) - 1 - i;
+                NpBookmark *bm = searchResults[i];
+                
+                resultTexts[resultIndex][0] = '\0';
+                
+                if(bm){
+                    Buffer_Summary buffer = get_buffer_by_marker_handle(app, bm->marker, AccessOpen);
+                    
+                    Marker marker;
+                    if(buffer_get_markers(app, &buffer, bm->marker, /*index, count, out=*/0, 1, &marker)){
+                        
+                        Buffer_Seek seek = {};
+                        seek.type = buffer_seek_pos;
+                        seek.pos = marker.pos;
+                        
+                        Partial_Cursor cursor = {};
+                        buffer_compute_cursor(app, &buffer, seek, &cursor);
+                        
+                        int32_t start = buffer_get_line_start(app, &buffer, cursor.line);
+                        int32_t end = buffer_get_line_end(app, &buffer, cursor.line);
+                        
+                        char content[256];
+                        
+                        if(end - start > sizeof(content)){
+                            end = start + sizeof(content);
+                        }
+                        
+                        buffer_read_range(app, &buffer, start, end, content);
+                        
+                        size_t len = snprintf(results[resultIndex].string.str, results[resultIndex].string.memory_size, "%s  /: %.*s", bm->bookmarkName, end - start, content);
+                        
+                        if(len < results[resultIndex].string.memory_size){
+                            results[resultIndex].string.size = len;
+                        }else{
+                            results[resultIndex].string.size = results[resultIndex].string.memory_size;
+                        }
+                    }
+                }
+            }
+            
+            User_Input in = get_user_input(app, EventOnAnyKey, EventOnEsc | EventOnButton);
+            
+            if(in.abort){
+                break;
+            }
+            
+            uint8_t character[4];
+            uint32_t length = 0;
+            if(key_is_unmodified(&in.key)){
+                length = to_writable_character(in, character);
+            }
+            
+            if(in.type == UserInputKey){
+                if(in.key.keycode == '\n' || in.key.keycode == '\t'){
+                    NpBookmark *jmpTo = searchResults[0];
+                    if(jmpTo){
+                        View_Summary view = get_active_view(app, AccessOpen);
+                        
+                        Buffer_Summary buffer = get_buffer_by_marker_handle(app, jmpTo->marker, AccessOpen); // @todo What happens here when the buffer has been killed? Will the marker point into bad memory?
+                        if(buffer.exists){
+                            Marker marker;
+                            if(buffer_get_markers(app, &buffer, jmpTo->marker, /*index, count, out=*/0, 1, &marker)){
+                                Buffer_Seek seek = {};
+                                seek.type = buffer_seek_pos;
+                                seek.pos = marker.pos;
+                                
+                                view_set_buffer(app, &view, buffer.buffer_id, /*flags=*/0);
+                                view_set_cursor(app, &view, seek, true);
+                            }
+                        }
+                    }
+                    break;
+                }else if(in.key.keycode == key_back){
+                    backspace_utf8(&bar.string);
+                }else if(length > 0){
+                    append_ss(&bar.string, make_string(character, length));
+                }
+            }
+        }
+        
+        end_query_bar(app, &bar, 0);
+    }
+    
+    npForRange(i, npArrayLength(results)){
+        end_query_bar(app, &results[i], 0);
+    }
+}
+
+/* END BOOKMARKS CODE */
+
 
 
 
@@ -101,7 +340,6 @@ CUSTOM_COMMAND_SIG(cro_comment_toggle){
             if (view.mark.character == 1) max_line--;
         }
         
-        
         bool is_commenting = false;
         for(int line_number=min_line; line_number<=max_line; line_number++) {
             int pos = buffer_get_line_start(app, &buffer, line_number);
@@ -132,9 +370,7 @@ CUSTOM_COMMAND_SIG(cro_comment_toggle){
             view_set_highlight(app, &view, min_pos, max_pos, true);
         }
     } else {
-        
-        
-        auto pos = buffer_get_line_start(app, &buffer, view.cursor.line); // - Np3w
+        auto pos = buffer_get_line_start(app, &buffer, view.cursor.line); // - Np3w: seek_line_beginning returns the wrong position in some cases?
         //auto pos = seek_line_beginning(app, &buffer, view.cursor.pos);
         
         
@@ -676,6 +912,12 @@ default_keys(Bind_Helper *context){
     /* Croepha comment toggle bindings */
     bind(context, 'l', MDFR_CTRL, cro_comment_toggle);
     /* End of Croepha comment toggle bindings */
+    
+    
+    /* Np3w bookmark bindings */
+    bind(context, 'b', MDFR_CTRL, np_set_bookmark_at_cursor);
+    bind(context, 'B', MDFR_CTRL, np_interactive_goto_bookmark);
+    /* End of Np3w bookmark bindings */
     
     end_map(context);
 }
