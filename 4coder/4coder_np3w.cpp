@@ -212,16 +212,53 @@ CUSTOM_COMMAND_SIG(np3w_delete_until_end_of_line){
     View_Summary view = get_active_view(app, AccessOpen);
     Buffer_Summary buffer = get_buffer(app, view.buffer_id, AccessOpen);
     
-    Partition *part = &global_part;
-    
-    
-    
     int32_t start = view.cursor.pos;
-    int32_t end = buffer_get_line_end(app, &buffer, view.cursor.line) + 1;
+    int32_t end = buffer_get_line_end(app, &buffer, view.cursor.line);
     
     buffer_replace_range(app, &buffer, start, end, 0, 0);
+}
+
+CUSTOM_COMMAND_SIG(np3w_cut_until_end_of_line){
+    View_Summary view = get_active_view(app, AccessOpen);
+    Buffer_Summary buffer = get_buffer(app, view.buffer_id, AccessOpen);
     
+    int32_t start = view.cursor.pos;
+    int32_t end = buffer_get_line_end(app, &buffer, view.cursor.line);
     
+    clipboard_copy(app, start, end, &buffer, AccessOpen);
+    
+    buffer_replace_range(app, &buffer, start, end, 0, 0);
+}
+CUSTOM_COMMAND_SIG(np3w_cut_line){
+    View_Summary view = get_active_view(app, AccessOpen);
+    Buffer_Summary buffer = get_buffer(app, view.buffer_id, AccessOpen);
+    
+    int32_t start = buffer_get_line_start(app, &buffer, view.cursor.line);
+    int32_t end = buffer_get_line_end(app, &buffer, view.cursor.line);
+    
+    clipboard_copy(app, start, end, &buffer, AccessOpen);
+    
+    buffer_replace_range(app, &buffer, start, end, 0, 0);
+}
+
+
+CUSTOM_COMMAND_SIG(np3w_copy_until_end_of_line){
+    View_Summary view = get_active_view(app, AccessOpen);
+    Buffer_Summary buffer = get_buffer(app, view.buffer_id, AccessOpen);
+    
+    int32_t start = view.cursor.pos;
+    int32_t end = buffer_get_line_end(app, &buffer, view.cursor.line);
+    
+    clipboard_copy(app, start, end, &buffer, AccessOpen);
+}
+CUSTOM_COMMAND_SIG(np3w_copy_line){
+    View_Summary view = get_active_view(app, AccessOpen);
+    Buffer_Summary buffer = get_buffer(app, view.buffer_id, AccessOpen);
+    
+    int32_t start = buffer_get_line_start(app, &buffer, view.cursor.line);
+    int32_t end = buffer_get_line_end(app, &buffer, view.cursor.line);
+    
+    clipboard_copy(app, start, end, &buffer, AccessOpen);
 }
 
 void
@@ -377,11 +414,22 @@ default_keys(Bind_Helper *context){
     
     bind(context, ' ', MDFR_CTRL, set_mark);
     bind(context, 'a', MDFR_CTRL, replace_in_range);
-    bind(context, 'c', MDFR_CTRL, copy);
     
+    // Delete, cut and copy
     bind(context, 'd', MDFR_CTRL, delete_range);
     bind(context, 'D', MDFR_CTRL, np3w_delete_until_end_of_line);
-    bind(context, 'D', MDFR_ALT, delete_line);
+    bind(context, 'D', MDFR_ALT,  delete_line);
+    
+    bind(context, 'x', MDFR_CTRL, cut);
+    bind(context, 'X', MDFR_CTRL, np3w_cut_until_end_of_line);
+    bind(context, 'X', MDFR_ALT,  np3w_cut_line);
+    
+    bind(context, 'c', MDFR_CTRL, copy);
+    bind(context, 'C', MDFR_CTRL, np3w_copy_until_end_of_line);
+    bind(context, 'C', MDFR_ALT, np3w_copy_line);
+    
+    
+    
     
     bind(context, 'e', MDFR_CTRL, center_view);
     bind(context, 'E', MDFR_CTRL, left_adjust_view);
@@ -404,7 +452,7 @@ default_keys(Bind_Helper *context){
     bind(context, 'v', MDFR_CTRL, paste_and_indent);
     bind(context, 'v', MDFR_ALT, toggle_virtual_whitespace);
     bind(context, 'V', MDFR_CTRL, paste_next_and_indent);
-    bind(context, 'x', MDFR_CTRL, cut);
+    
     bind(context, 'y', MDFR_CTRL, redo);
     bind(context, 'z', MDFR_CTRL, undo);
     
@@ -430,7 +478,8 @@ START_HOOK_SIG(np3w_init){
     
     //np3w_set_colors(app, true);
     //change_theme(app, literal("Handmade Hero"));
-    change_theme(app, literal("stb"));
+    //change_theme(app, literal("stb"));
+    change_theme(app, literal("Np3w"));
     
     return(0);
 }
