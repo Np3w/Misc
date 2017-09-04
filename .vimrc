@@ -78,6 +78,9 @@ let $NVIM_TUI_ENABLE_TRUE_COLOR=1
 
 :nnoremap <c-b> :call BuildProject()<enter>
 
+" Use clipboard by default
+:set clipboard=unnamed,unnamedplus
+
 " Status line
 :set ruler
 :set laststatus=2
@@ -87,25 +90,30 @@ let $NVIM_TUI_ENABLE_TRUE_COLOR=1
 :endfunction
 
 :function! MyStatusLine()
-	:let left = bufname("%")
-	:let w = winwidth(0)
-	:let line_num = line('.')
-	:let col_num = col('.')
-	:let offset = line2byte(line_num) + col_num - 2
-	:let right = printf("L%d C%-4d (%06d)", line_num, col_num, offset)
-	:let spacing = w - strchars(left) - strchars(right)
-	:return "". left . repeat(" ", spacing) . right
+    :let left = bufname("%")
+    :let w = winwidth(0)
+    :let line_num = line('.')
+    :let col_num = col('.')
+    :let offset = line2byte(line_num) + col_num - 2
+    :let right = printf("L%d C%-4d (%06d)", line_num, col_num, offset)
+    :let spacing = w - strchars(left) - strchars(right)
+    :return "". left . repeat(" ", spacing) . right
 :endfunction
 
 :hi statusline ctermbg=white ctermfg=black
 :set statusline=%!MyStatusLine()
 
 " Tab settings
-:set tabstop=2
-:set shiftwidth=2
+:set tabstop=4
+:set shiftwidth=4
+:set softtabstop=0
+:set expandtab
+:set smarttab
 :set list
-:set listchars=tab:\|\ ,extends:›,precedes:‹,nbsp:·,trail:·
-"					hello
+:set lcs=tab:\ \
+
+" Let vim handle mouse input
+:se mouse+=a
 
 " ------------ "
 " Setup colors "
@@ -113,7 +121,7 @@ let $NVIM_TUI_ENABLE_TRUE_COLOR=1
 
 " Enable 24 bit colors
 :if has('nvim')
-:	set termguicolors
+:   set termguicolors
 :endif
 
 " Does something
