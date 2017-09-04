@@ -272,7 +272,9 @@ void cro_selection_cont(Application_Links* app, Custom_Command_Function wrapped_
     int32_t pos = view.cursor.character_pos;
     view_set_highlight(app, &view, range.min, range.max, true);
     view_set_cursor(app, &view, seek_character_pos(pos), 1);
-    center_view(app); /// because for some reason when you select move down the buffer doesn't scroll with your...
+    
+    // NOTE(Np3w): I don't use it to select large vertical pieces of code so I don't care
+    //center_view(app); /// because for some reason when you select move down the buffer doesn't scroll with your...
     
 }
 void cro_selection_delete_or_cmd(Application_Links* app, Custom_Command_Function wrapped_func) {

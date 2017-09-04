@@ -25,10 +25,51 @@ let $NVIM_TUI_ENABLE_TRUE_COLOR=1
 :inoremap <c-c> <esc>viw~i
 :nnoremap <c-c> viw~
 
+:nnoremap <c-down>   }
+:nnoremap <c-up>     {
+:nnoremap <c-left>   b
+:nnoremap <c-right>  e
+
+:inoremap <c-down>     <esc>}a
+:inoremap <c-up>       <esc>{a
+:inoremap <c-left>     <esc>ba
+:inoremap <c-right>    <esc>ea
+
+:nnoremap <c-s>   :w<CR>
+:inoremap <c-s>   <esc>:w<CR>a
+
+" Shift based selection
+:nnoremap <s-left>      v<left>
+:nnoremap <s-right>     v<right>
+:nnoremap <s-down>      v<down>
+:nnoremap <s-up>        v<up>
+
+:nnoremap <c-s-left>      v<c-left>
+:nnoremap <c-s-right>     v<c-right>
+:nnoremap <c-s-down>      v<c-down>
+:nnoremap <c-s-up>        v<c-up>
+
+:vnoremap <s-left>      <left>
+:vnoremap <s-right>     <right>
+:vnoremap <s-down>      <down>
+:vnoremap <s-up>        <up>
+
+:vnoremap <c-s-down>   }
+:vnoremap <c-s-up>     {
+:vnoremap <c-s-left>   b
+:vnoremap <c-s-right>  e
+
+:vnoremap <c-down>   }
+:vnoremap <c-up>     {
+:vnoremap <c-left>   b
+:vnoremap <c-right>  e
+
 :nnoremap <c-n> :tabnext<enter>
 
 " Exit terminal mode shortcut
-:tnoremap <esc> <C-\><C-n><C-w>k
+:if has('nvim')
+:	tnoremap <esc> <C-\><C-n><C-w>k
+:endif
 
 " Build project
 :function! BuildProject()
@@ -38,7 +79,7 @@ let $NVIM_TUI_ENABLE_TRUE_COLOR=1
 :nnoremap <c-b> :call BuildProject()<enter>
 
 " Status line
-:set noruler
+:set ruler
 :set laststatus=2
 
 :function! SyntaxItem()
@@ -66,10 +107,14 @@ let $NVIM_TUI_ENABLE_TRUE_COLOR=1
 :set listchars=tab:\|\ ,extends:›,precedes:‹,nbsp:·,trail:·
 "					hello
 
-" Setup colors
+" ------------ "
+" Setup colors "
+" ------------ "
 
 " Enable 24 bit colors
-:set termguicolors
+:if has('nvim')
+:	set termguicolors
+:endif
 
 " Does something
 :hi clear
@@ -78,6 +123,7 @@ let $NVIM_TUI_ENABLE_TRUE_COLOR=1
 
 :hi SpecialKey ctermfg=gray ctermfg=gray guifg=#444444
 
+:if 0
 " Note: Based on GingerBill's Iridis colour scheme
 :hi Normal guibg=#2b303b guifg=#d2d7e0
 :hi LineNr guibg=#2b303b guifg=#d2d7e0
@@ -96,8 +142,28 @@ let $NVIM_TUI_ENABLE_TRUE_COLOR=1
 
 :hi! link cType Type
 :hi! link cCppString String
+:endif
 
-" Keywords guifg=#ff3848
+:if 1
+:hi Normal guibg=#0c2000 guifg=#c0c900
+:hi LineNr guibg=#0c2000 guifg=#c0c900
+:hi CursorLineNr guibg=#2b303b guifg=#d2d7e0
+:hi Type guifg=#40c0ff
+:hi Comment ctermfg=LightGray guifg=#00f000
+:hi Cursor guibg=#00ee00 guifg=#000000
+:hi lCursor guibg=#d2d7e0
+:hi String guifg=#c08020
+:hi Constant guifg=#c08020
+:hi Identifier guifg=#c0c900
+:hi Statement guifg=#a04000
+:hi PreProc ctermfg=LightGray guifg=#c0c900
+
+:hi cFormat guifg=#ff3e2e
+
+:hi! link cType Type
+:hi! link cCppString String
+:endif
+
 
 :syntax enable
 

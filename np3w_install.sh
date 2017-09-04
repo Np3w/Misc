@@ -2,8 +2,10 @@
 
 # Script that sets up a nice linux environment
 
-echo "Installing vim/neovim configuration"
+echo "Installing vim config"
 ln -sf ~/proj/Misc/.vimrc ~/.vimrc
+
+echo "Installing neovim config"
 mkdir -p ~/.config/nvim
 ln -sf ~/proj/Misc/.vimrc ~/.config/nvim/init.vim
 
