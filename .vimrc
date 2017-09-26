@@ -35,34 +35,40 @@ let $NVIM_TUI_ENABLE_TRUE_COLOR=1
 :inoremap <c-left>     <esc>ba
 :inoremap <c-right>    <esc>ea
 
-:nnoremap <c-s>   :w<CR>
-:inoremap <c-s>   <esc>:w<CR>a
+:nnoremap <c-s>        :w<CR>
+:inoremap <c-s>        <esc>:w<CR>a
 
 " Shift based selection
-:nnoremap <s-left>      v<left>
-:nnoremap <s-right>     v<right>
-:nnoremap <s-down>      v<down>
-:nnoremap <s-up>        v<up>
+:nnoremap <s-left>        v<left>
+:nnoremap <s-right>       v<right>
+:nnoremap <s-down>        v<down>
+:nnoremap <s-up>          v<up>
 
 :nnoremap <c-s-left>      v<c-left>
 :nnoremap <c-s-right>     v<c-right>
 :nnoremap <c-s-down>      v<c-down>
 :nnoremap <c-s-up>        v<c-up>
 
-:vnoremap <s-left>      <left>
-:vnoremap <s-right>     <right>
-:vnoremap <s-down>      <down>
-:vnoremap <s-up>        <up>
+:vnoremap <s-left>        <left>
+:vnoremap <s-right>       <right>
+:vnoremap <s-down>        <down>
+:vnoremap <s-up>          <up>
 
-:vnoremap <c-s-down>   }
-:vnoremap <c-s-up>     {
-:vnoremap <c-s-left>   b
-:vnoremap <c-s-right>  e
+:vnoremap <c-s-down>      }
+:vnoremap <c-s-up>        {
+:vnoremap <c-s-left>      b
+:vnoremap <c-s-right>     e
 
-:vnoremap <c-down>   }
-:vnoremap <c-up>     {
-:vnoremap <c-left>   b
-:vnoremap <c-right>  e
+:vnoremap <c-down>        }
+:vnoremap <c-up>          {
+:vnoremap <c-left>        b
+:vnoremap <c-right>       e
+
+:inoremap <c-backspace>   <esc>vbda
+
+" ctrl-c copies
+:vnoremap <c-c>           y
+
 
 :nnoremap <c-n> :tabnext<enter>
 
@@ -90,14 +96,34 @@ let $NVIM_TUI_ENABLE_TRUE_COLOR=1
 :endfunction
 
 :function! MyStatusLine()
-    :let left = bufname("%")
+    :if &mod
+        :let modifier = "*"
+    :else
+        :let modifier = " "
+    :endif
+    :let line_num = 1
+    :let n = 0
+    :while line_num <= line('$')
+        :let n = n + len(split(getline(line_num)))
+        :let line_num = line_num + 1
+    :endwhile
+    :let word_count = printf("WordCount: %d", n)
+
+    :let left = printf("%s [%s]", bufname("%"), modifier)
+
     :let w = winwidth(0)
     :let line_num = line('.')
     :let col_num = col('.')
+
     :let offset = line2byte(line_num) + col_num - 2
     :let right = printf("L%d C%-4d (%06d)", line_num, col_num, offset)
-    :let spacing = w - strchars(left) - strchars(right)
-    :return "". left . repeat(" ", spacing) . right
+
+	:let middle = printf("%s", word_count)
+
+    :let spacing1 = (w / 2) - strchars(left) - (strchars(middle) / 2)
+	:let spacing2 = w - strchars(left) - spacing1 - strchars(middle) - strchars(right)
+
+    :return "" . left . repeat(" ", spacing1) . middle . repeat(" ", spacing2) . right
 :endfunction
 
 :hi statusline ctermbg=white ctermfg=black
@@ -174,6 +200,14 @@ let $NVIM_TUI_ENABLE_TRUE_COLOR=1
 
 
 :syntax enable
+
+
+
+
+" Set gui font
+set guifont=Liberation\ Mono\ 10
+
+
 
 
 
