@@ -372,9 +372,7 @@ CUSTOM_COMMAND_SIG(cro_comment_toggle){
             view_set_highlight(app, &view, min_pos, max_pos, true);
         }
     } else {
-        auto pos = buffer_get_line_start(app, &buffer, view.cursor.line); // - Np3w: seek_line_beginning returns the wrong position in some cases?
-        //auto pos = seek_line_beginning(app, &buffer, view.cursor.pos);
-        
+        auto pos = seek_line_beginning(app, &buffer, view.cursor.pos);
         
         char line_start[2];
         buffer_read_range(app, &buffer, pos, pos+2, line_start);
