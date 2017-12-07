@@ -189,6 +189,27 @@ mode "np3w" {
 exec --no-startup-id xsetroot -solid '#2c5f0c'
 
 
+# Mouse focus more nicely
+focus_follows_mouse no
+mouse_warping output
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

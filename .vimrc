@@ -44,6 +44,11 @@ let $NVIM_TUI_ENABLE_TRUE_COLOR=1
 :nnoremap <s-down>        v<down>
 :nnoremap <s-up>          v<up>
 
+:inoremap <s-down>     <esc>v<down>
+:inoremap <s-up>       <esc>v<up>
+:inoremap <s-left>     <esc>v<left>
+:inoremap <s-right>    <esc>v<right>
+
 :nnoremap <c-s-left>      v<c-left>
 :nnoremap <c-s-right>     v<c-right>
 :nnoremap <c-s-down>      v<c-down>
@@ -69,7 +74,7 @@ let $NVIM_TUI_ENABLE_TRUE_COLOR=1
 " ctrl-c copies
 :vnoremap <c-c>           y
 
-
+:nnoremap <c-tab> :tabnext<enter>
 :nnoremap <c-n> :tabnext<enter>
 
 " Exit terminal mode shortcut
