@@ -1,5 +1,5 @@
 /*
- 4coder_np3w - Np3w's 4coder configuration
+4coder_np3w - Np3w's 4coder configuration
  
 TYPE: 'build-target'
 */
@@ -642,8 +642,7 @@ CUSTOM_COMMAND_SIG(np3w_copy_line){
     clipboard_copy(app, start, end, &buffer, AccessOpen);
 }
 
-void
-default_keys(Bind_Helper *context){
+void np3w_default_keys(Bind_Helper *context){
     begin_map(context, mapid_global);
     
     bind(context, 'p', MDFR_CTRL, open_panel_vsplit);
@@ -657,7 +656,9 @@ default_keys(Bind_Helper *context){
     bind(context, 'o', MDFR_ALT, open_in_other);
     bind(context, 'k', MDFR_CTRL, interactive_kill_buffer);
     bind(context, 'i', MDFR_CTRL, interactive_switch_buffer);
-    bind(context, 'w', MDFR_CTRL, save_as);
+
+    //bind(context, 'w', MDFR_CTRL, save_as);
+
     bind(context, 'h', MDFR_CTRL, project_go_to_root_directory);
     
     bind(context, 'c', MDFR_ALT, open_color_tweaker);
@@ -969,7 +970,7 @@ get_bindings(void *data, int32_t size){
     Bind_Helper *context = &context_;
     
     set_all_default_hooks(context);
-    default_keys(context);
+    np3w_default_keys(context);
     
     set_start_hook(context, np3w_init);
     set_new_file_hook(context, np3w_new_file);
