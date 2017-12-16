@@ -919,6 +919,10 @@ void np3w_default_keys(Bind_Helper *context){
     bind(context, 'b', MDFR_CTRL, np_set_bookmark_at_cursor);
     bind(context, 'B', MDFR_CTRL, np_interactive_goto_bookmark);
     /* End of Np3w bookmark bindings */
+
+    /* 4coder 4.0.25 stuff */
+    bind(context, 'T', MDFR_ALT, list_all_locations_of_type_definition_of_identifier);
+    /* End of 4coder 4.0.25 stuff */
     
     end_map(context);
 }
