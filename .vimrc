@@ -184,7 +184,12 @@ let $NVIM_TUI_ENABLE_TRUE_COLOR=1
 :endif
 
 :if 1
+:if 0
 :hi Normal guibg=#0c2000 guifg=#c0c900
+:else
+:hi Normal guibg=#0c2a60 guifg=#e6ec00
+:endif
+
 :hi LineNr guibg=#0c2000 guifg=#c0c900
 :hi CursorLineNr guibg=#2b303b guifg=#d2d7e0
 :hi Type guifg=#40c0ff

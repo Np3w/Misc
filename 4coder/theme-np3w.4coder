@@ -1,6 +1,6 @@
 name = "Np3w";
 
-Back = 0xFF0c2000;
+Back = 0xFF0c2040;
 Margin = 0xFF181818;
 Margin_Hover = 0xFF252525;
 Margin_Active = 0xFF323232;
@@ -14,7 +14,7 @@ Default = 0xFFc0c900;
 At_Cursor = Back;
 At_Highlight = 0xFFFF44DD;
 Comment = 0xFF00f000;
-Keyword = 0xFFa04000;
+Keyword = 0xFFa04088;
 
 Str_Constant   = 0xFFc08020;
 Char_Constant  = Str_Constant;

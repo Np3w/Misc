@@ -1,6 +1,6 @@
 /*
 4coder_np3w - Np3w's 4coder configuration
- 
+
 TYPE: 'build-target'
 */
 
@@ -324,6 +324,57 @@ CUSTOM_COMMAND_SIG(cro_selection_write_character){
 
 /* END */
 
+/* a slightly modified seek_line_beginning() which finds the first non-whitespace codepoint on the line */
+static int32_t
+np3w_seek_line_beginning(Application_Links *app, Buffer_Summary *buffer, int32_t pos){
+    char chunk[1024];
+    int32_t chunk_size = sizeof(chunk);
+    Stream_Chunk stream = {0};
+    
+    int32_t found_pos = pos;
+    
+    pos -= 1;
+    if (init_stream_chunk(&stream, app, buffer, pos, chunk, chunk_size)){
+        int32_t whitespace_count = 0;
+        
+        bool found = false;
+        
+        bool still_looping = 1;
+        do{
+            for (; pos >= stream.start; --pos){
+                if(stream.data[pos] == ' ' || stream.data[pos] == '\t'){
+                    if(whitespace_count == 0){
+                        found_pos = pos;
+                    }
+                    whitespace_count += 1;
+                }else if (stream.data[pos] == '\n'){
+                    found = true;
+                    if(whitespace_count == 0){
+                        found_pos = pos;
+                    }
+                    goto double_break;
+                }else{
+                    whitespace_count = 0;
+                }
+            }
+            still_looping = backward_stream_chunk(&stream);
+        }while(still_looping);
+        double_break:;
+        
+        if(!found){
+            return 0;
+        }
+        
+        ++found_pos;
+        
+        if (found_pos < 0){
+            found_pos = 0;
+        }
+    }
+    
+    return(found_pos);
+}
+
 /* BEGIN CODE COPIED FROM https://4coder.handmade.network/forums/t/2430-made_a_comment_toggle_command */
 
 CUSTOM_COMMAND_SIG(cro_comment_toggle){
@@ -345,6 +396,20 @@ CUSTOM_COMMAND_SIG(cro_comment_toggle){
         bool is_commenting = false;
         for(int line_number=min_line; line_number<=max_line; line_number++) {
             int pos = buffer_get_line_start(app, &buffer, line_number);
+            
+            // NOTE(Np3w): Skip all whitespace
+            while(true){
+                char tmp[1];
+                
+                buffer_read_range(app, &buffer, pos, pos+1, tmp);
+                
+                if(tmp[0] == ' ' || tmp[0] == '\t'){
+                    pos += 1;
+                }else{
+                    break;
+                }
+            }
+            
             char line_start[2];
             if (buffer_read_range(app, &buffer, pos, pos+2, line_start)) {
                 if (!(line_start[0]=='/' && line_start[1]=='/')) {is_commenting=true; break; }
@@ -352,6 +417,20 @@ CUSTOM_COMMAND_SIG(cro_comment_toggle){
         }
         for(int line_number=min_line; line_number<=max_line; line_number++) {
             int pos = buffer_get_line_start(app, &buffer, line_number);
+            
+            // NOTE(Np3w): Skip all whitespace
+            while(true){
+                char tmp[1];
+                
+                buffer_read_range(app, &buffer, pos, pos+1, tmp);
+                
+                if(tmp[0] == ' ' || tmp[0] == '\t'){
+                    pos += 1;
+                }else{
+                    break;
+                }
+            }
+            
             if (is_commenting) {
                 buffer_replace_range(app, &buffer, pos, pos, "//", 2);
             } else {
@@ -372,10 +451,14 @@ CUSTOM_COMMAND_SIG(cro_comment_toggle){
             view_set_highlight(app, &view, min_pos, max_pos, true);
         }
     } else {
-        auto pos = seek_line_beginning(app, &buffer, view.cursor.pos);
+        // NOTE(Np3w): Use np3w_seek_line_beginning so this actually works correctly with indentation
+        auto pos = np3w_seek_line_beginning(app, &buffer, view.cursor.pos);
         
         char line_start[2];
         buffer_read_range(app, &buffer, pos, pos+2, line_start);
+        
+        //fprintf(stderr, "pos = %d, line_start = \"%.*s\"\n", pos, 2, line_start);
+        
         if (line_start[0]=='/' && line_start[1]=='/') {
             buffer_replace_range(app, &buffer, pos, pos+2, 0, 0);
         } else {
@@ -559,31 +642,33 @@ CUSTOM_COMMAND_SIG(np3w_execute_arbitrary_command){
         exec_command(app, load_project);
         // NOTE(Np3w): Actually open all the code
         exec_command(app, open_all_code_recursive);
-    }
-    else if (match_ss(bar.string, make_lit_string("open all code"))){
+    }else if (match_ss(bar.string, make_lit_string("open all code"))){
         exec_command(app, open_all_code);
-    }
-    else if (match_ss(bar.string, make_lit_string("open all code recursive"))){
+    }else if (match_ss(bar.string, make_lit_string("open all code recursive"))){
         exec_command(app, open_all_code_recursive);
-    }
-    else if(match_ss(bar.string, make_lit_string("close all code"))){
+    }else if(match_ss(bar.string, make_lit_string("close all code"))){
         exec_command(app, close_all_code);
-    }
-    else if (match_ss(bar.string, make_lit_string("dos lines")) ||
-             match_ss(bar.string, make_lit_string("dosify"))){
+    }else if (match_ss(bar.string, make_lit_string("dos lines")) ||
+              match_ss(bar.string, make_lit_string("dosify"))){
         exec_command(app, eol_dosify);
-    }
-    else if (match_ss(bar.string, make_lit_string("nix lines")) ||
-             match_ss(bar.string, make_lit_string("nixify"))){
+    }else if (match_ss(bar.string, make_lit_string("nix lines")) ||
+              match_ss(bar.string, make_lit_string("nixify"))){
         exec_command(app, eol_nixify);
-    }
-    else if(match_ss(bar.string, make_lit_string("light color"))){
+    }else if(match_ss(bar.string, make_lit_string("light color"))){
         np3w_set_colors(app, false);
-    }
-    else if(match_ss(bar.string, make_lit_string("dark color"))){
+    }else if(match_ss(bar.string, make_lit_string("dark color"))){
         np3w_set_colors(app, true);
-    }
-    else{
+    }else if(match_ss(bar.string, make_lit_string("config"))){
+        
+        print_message(app, literal("Running config"));
+        
+        char * file_name = NP_CONFIG_FILE;
+        int len = strlen(file_name);
+        
+        Buffer_Summary buffer = {};
+        
+        buffer = create_buffer(app, file_name, len, /*flags*/0);
+    }else{
         print_message(app, literal("unrecognized command\n"));
     }
 }
@@ -656,9 +741,9 @@ void np3w_default_keys(Bind_Helper *context){
     bind(context, 'o', MDFR_ALT, open_in_other);
     bind(context, 'k', MDFR_CTRL, interactive_kill_buffer);
     bind(context, 'i', MDFR_CTRL, interactive_switch_buffer);
-
+    
     //bind(context, 'w', MDFR_CTRL, save_as);
-
+    
     bind(context, 'h', MDFR_CTRL, project_go_to_root_directory);
     
     bind(context, 'c', MDFR_ALT, open_color_tweaker);
@@ -919,7 +1004,7 @@ void np3w_default_keys(Bind_Helper *context){
     bind(context, 'b', MDFR_CTRL, np_set_bookmark_at_cursor);
     bind(context, 'B', MDFR_CTRL, np_interactive_goto_bookmark);
     /* End of Np3w bookmark bindings */
-
+    
     /* 4coder 4.0.25 stuff */
     bind(context, 'T', MDFR_ALT, list_all_locations_of_type_definition_of_identifier);
     /* End of 4coder 4.0.25 stuff */
