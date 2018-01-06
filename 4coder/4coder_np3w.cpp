@@ -14,6 +14,14 @@ TYPE: 'build-target'
 
 /* BEGIN BOOKMARKS CODE */
 
+static void
+npAssert_fail(const char * condition, int line, char * file){
+    fprintf(stderr, "Assertion %s failed\n", condition);
+    *((int*)(0x0)) = 0; // This should crash the program
+}
+
+#define npAssert(_cond_) do{ if(!(_cond_)){ npAssert_fail(#_cond_, __LINE__, __FILE__); } }while(0)
+
 #include <stdarg.h>
 
 static uint32_t npStringMatchScore(char *a, uint32_t a_len, char *b, uint32_t b_len){
@@ -45,11 +53,14 @@ static void npPrint(Application_Links *app, const char *format, ...){
     
     vsnprintf(buffer, sizeof(buffer), format, list);
     
+    fprintf(stderr, "[NP] %s\n", buffer);
+    
     va_end(list);
     
-    print_message(app, buffer, strlen(buffer));
     
-    print_message(app, "\n", 1);
+    // @TODO: Report bug: print_message sometimes causes crash when printing "\n". Seems quite random.
+    //print_message(app, buffer, strlen(buffer));
+    //print_message(app, "\n", 1);
 }
 
 struct NpBookmark{
@@ -124,8 +135,11 @@ static void npSearchBookmarks(Application_Links *app, NpBookmark **results, int 
         items[i].bookmark = (npBookmarks[i].active) ? (&npBookmarks[i]) : (nullptr);
         
         if(items[i].bookmark){
+            // Make it score better than null entries
+            items[i].score += 1;
+            
             // Calculate the score
-            items[i].score = npStringMatchScore(search.str, search.size, items[i].bookmark->bookmarkName, strlen(items[i].bookmark->bookmarkName));
+            items[i].score += npStringMatchScore(search.str, search.size, items[i].bookmark->bookmarkName, strlen(items[i].bookmark->bookmarkName));
             
             npPrint(app, "npSearchBookmarks:   %s -> %d", items[i].bookmark->bookmarkName, items[i].score);
         }
@@ -155,9 +169,42 @@ CUSTOM_COMMAND_SIG(np_interactive_goto_bookmark){
     bar.string = make_fixed_width_string(stringBuffer);
     
     if(start_query_bar(app, &bar, 0)){
+        NpBookmark * selected = NULL;
+        int selected_index = 0;
+        bool explicit_select = false; // Should we follow the currently selected bookmark or not
+        
         while(1){
             NpBookmark *searchResults[npArrayLength(results)];
             npSearchBookmarks(app, searchResults, npArrayLength(searchResults), bar.string);
+            if(!selected){
+                selected = searchResults[selected_index];
+                while(!selected && selected_index > 0){
+                    selected_index -= 1;
+                    selected = searchResults[selected_index];
+                }
+                
+            }else if(explicit_select){
+                // Continue using currently selected bookmark
+                selected_index = -1;
+                
+                npForRange(i, npArrayLength(results)){
+                    NpBookmark *bm = searchResults[i];
+                    if(bm == selected){
+                        selected_index = i;
+                    }
+                }
+                
+                if(selected_index == -1){ // Selected bookmark is no longer in search results.
+                    selected_index = 0;
+                    selected = searchResults[selected_index];
+                    explicit_select = false;
+                }
+            }else{
+                // Select best search result
+                selected_index = 0;
+                selected = searchResults[selected_index];
+            }
+            
             npForRange(i, npArrayLength(results)){
                 int resultIndex = npArrayLength(results) - 1 - i;
                 NpBookmark *bm = searchResults[i];
@@ -188,14 +235,30 @@ CUSTOM_COMMAND_SIG(np_interactive_goto_bookmark){
                         
                         buffer_read_range(app, &buffer, start, end, content);
                         
-                        size_t len = snprintf(results[resultIndex].string.str, results[resultIndex].string.memory_size, "%s  /: %.*s", bm->bookmarkName, end - start, content);
+                        char * selection_string;
+                        if(selected == bm){
+                            if(explicit_select){
+                                selection_string = "->";
+                            }else{
+                                selection_string = "--";
+                            }
+                        }else{
+                            selection_string = "::";
+                        }
                         
-                        if(len < results[resultIndex].string.memory_size){
+                        size_t len = snprintf(
+                            results[resultIndex].string.str, results[resultIndex].string.memory_size,
+                            "%s%s  /: %.*s",
+                            selection_string, bm->bookmarkName, end - start, content);
+                        
+                        if(len >= 0 && len < results[resultIndex].string.memory_size){
                             results[resultIndex].string.size = len;
                         }else{
                             results[resultIndex].string.size = results[resultIndex].string.memory_size;
                         }
                     }
+                }else{
+                    results[resultIndex].string.size = 0; // Clear it
                 }
             }
             
@@ -203,21 +266,45 @@ CUSTOM_COMMAND_SIG(np_interactive_goto_bookmark){
             
             if(in.abort){
                 break;
-            }
-            
-            uint8_t character[4];
-            uint32_t length = 0;
-            if(key_is_unmodified(&in.key)){
-                length = to_writable_character(in, character);
-            }
-            
-            if(in.type == UserInputKey){
-                if(in.key.keycode == '\n' || in.key.keycode == '\t'){
-                    NpBookmark *jmpTo = searchResults[0];
+            }else if(in.type == UserInputKey){
+                uint8_t character[4];
+                uint32_t length = 0;
+                if(key_is_unmodified(&in.key)){
+                    length = to_writable_character(in, character);
+                }
+                
+                if(in.key.keycode == key_up){
+                    if(selected_index > 0){
+                        selected_index -= 1;
+                        selected = searchResults[selected_index];
+                    }
+                    explicit_select = true;
+                }else if(in.key.keycode == key_down){
+                    if(selected_index + 1 < npArrayLength(searchResults)){
+                        selected_index += 1;
+                        
+                        selected = searchResults[selected_index]; // Fixup
+                        while(!selected && selected_index > 0){
+                            selected_index -= 1;
+                            selected = searchResults[selected_index];
+                        }
+                    }
+                    explicit_select = true;
+                }else if(in.key.keycode == key_del){
+                    if(selected){
+                        selected->active = false;
+                        selected = nullptr;
+                    }
+                    
+                    explicit_select = false;
+                }else if(in.key.keycode == '\n' || in.key.keycode == '\t'){
+                    NpBookmark *jmpTo = selected;
                     if(jmpTo){
                         View_Summary view = get_active_view(app, AccessOpen);
                         
-                        Buffer_Summary buffer = get_buffer_by_marker_handle(app, jmpTo->marker, AccessOpen); // @todo What happens here when the buffer has been killed? Will the marker point into bad memory?
+                        // @todo What happens here when the buffer has been killed? Will the marker point into bad memory?
+                        Buffer_Summary buffer = get_buffer_by_marker_handle(app, jmpTo->marker, AccessOpen);
+                        
                         if(buffer.exists){
                             Marker marker;
                             if(buffer_get_markers(app, &buffer, jmpTo->marker, /*index, count, out=*/0, 1, &marker)){
