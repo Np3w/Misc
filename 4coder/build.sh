@@ -9,7 +9,7 @@ fi
 SCRIPT_DIR=$(realpath $(dirname $0))
 FCODER_DIR="$1"
 
-SCRIPT_NAME="4coder/build.sh:"
+SCRIPT_NAME="[4coder/build.sh]"
 
 WARNING_FLAGS="-Wno-write-strings"
 FLAGS="-std=gnu++0x -fno-rtti -fno-exceptions -fPIC -g -shared -I $FCODER_DIR"
@@ -18,8 +18,8 @@ echo "$SCRIPT_NAME Installing 4coder configuration to $FCODER_DIR/custom_4coder.
 gcc $WARNING_FLAGS $FLAGS $SCRIPT_DIR/4coder_np3w.cpp -o $FCODER_DIR/custom_4coder.so -Wall -Wno-parentheses -Wno-sign-compare -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -DNP_CONFIG_FILE=\"$SCRIPT_DIR/4coder_np3w.cpp\"
 
 if [ ! -f $FCODER_DIR/themes/theme-np3w.4coder ] ; then
-	echo "$SCRIPT_NAME Installing theme-np3w.4coder"
-	mkdir -p $FCODER_DIR/themes/
-	ln $SCRIPT_DIR/theme-np3w.4coder $FCODER_DIR/themes/theme-np3w.4coder
+    echo "$SCRIPT_NAME Installing theme-np3w.4coder"
+    mkdir -p $FCODER_DIR/themes/
+    ln $SCRIPT_DIR/theme-np3w.4coder $FCODER_DIR/themes/theme-np3w.4coder
 fi
 

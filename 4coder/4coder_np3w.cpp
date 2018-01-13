@@ -706,6 +706,81 @@ static void np3w_set_colors(Application_Links *app, bool dark){
 #endif
     }
 }
+
+static void
+np3w_dark_theme(Application_Links * app){
+    
+    int_color color_bg                = 0xFF1F1F1F;
+    int_color color_margin            = 0xFF262626;
+    int_color color_margin_hover      = 0xFF333333;
+    int_color color_margin_active     = 0xFF404040;
+    int_color color_cursor            = 0xFFE95420;
+    int_color color_highlight         = 0xFF703419;
+    int_color color_mark              = 0xFF8D360d;
+    int_color color_default           = 0xFFDADACA;
+    int_color color_at_highlight      = 0xFFCDAA7D;
+    int_color color_comment           = 0xFF7E9E7E;
+    int_color color_keyword           = 0xFFF5C59b;
+    int_color color_str_constant      = 0xFFCD9494;
+    int_color color_int_constant      = 0xFFCAB080;
+    int_color color_preproc           = 0xFF6BE0E3;
+    int_color color_special_character = 0xFFFF0000;
+    int_color color_ghost_character   = 0xFF5B4D3C;
+    int_color color_paste             = 0xFF2DFFAB;
+    int_color color_undo              = 0xFFE6644D;
+    int_color color_highlight_junk    = 0xFF3A0000;
+    int_color color_highlight_white   = 0xFF003A3A;
+    int_color color_bar               = 0xFF30333F;
+    int_color color_bar_active        = 0xFF000000;
+    int_color color_base              = 0xFFAAAAAA;
+    int_color color_pop1              = 0xFF03CF0C;
+    int_color color_pop2              = 0xFFFF0000;
+    
+    Theme_Color colors[] =  {
+        { Stag_Back,              color_bg},
+        { Stag_Margin,            color_margin},
+        { Stag_Margin_Hover,      color_margin_hover},
+        { Stag_Margin_Active,     color_margin_active},
+        
+        { Stag_List_Item,         color_margin},
+        { Stag_List_Item_Hover,   color_margin_hover},
+        { Stag_List_Item_Active,  color_margin_active},
+        { Stag_Cursor,            color_cursor },
+        { Stag_Highlight,         color_highlight },
+        { Stag_Mark,              color_mark },
+        { Stag_Default,           color_default },
+        { Stag_At_Cursor,         color_default },
+        { Stag_At_Highlight,      color_at_highlight },
+        { Stag_Comment,           color_comment },
+        { Stag_Keyword,           color_keyword },
+        { Stag_Str_Constant,      color_str_constant },
+        { Stag_Char_Constant,     color_str_constant },
+        { Stag_Int_Constant,      color_int_constant },
+        { Stag_Float_Constant,    color_int_constant },
+        { Stag_Bool_Constant,     color_int_constant },
+        { Stag_Include,           color_str_constant },
+        { Stag_Preproc,           color_preproc },
+        { Stag_Special_Character, color_special_character },
+        { Stag_Ghost_Character,   color_ghost_character },
+        
+        { Stag_Paste,             color_paste },
+        
+        { Stag_Undo,              color_undo },
+        
+        { Stag_Highlight_Junk,    color_highlight_junk },
+        { Stag_Highlight_White,   color_highlight_white },
+        
+        { Stag_Bar,               color_bar },
+        { Stag_Bar_Active,        color_bar_active },
+        { Stag_Base,              color_base },
+        { Stag_Pop1,              color_pop1 },
+        { Stag_Pop2,              color_pop2 },
+    };
+    set_theme_colors(app, colors, ArrayCount(colors));
+}
+
+
+
 // Use my own implementation of this so I can add commands
 CUSTOM_COMMAND_SIG(np3w_execute_arbitrary_command){
     // NOTE(allen): This isn't a super powerful version of this command, I will expand
@@ -746,7 +821,6 @@ CUSTOM_COMMAND_SIG(np3w_execute_arbitrary_command){
     }else if(match_ss(bar.string, make_lit_string("dark color"))){
         np3w_set_colors(app, true);
     }else if(match_ss(bar.string, make_lit_string("config"))){
-        
         print_message(app, literal("Running config"));
         
         char * file_name = NP_CONFIG_FILE;
@@ -813,6 +887,155 @@ CUSTOM_COMMAND_SIG(np3w_copy_line){
     
     clipboard_copy(app, start, end, &buffer, AccessOpen);
 }
+
+#define np_min(_a_, _b_) (((_a_) < (_b_)) ? (_a_) : (_b_))
+#define np_max(_a_, _b_) (((_a_) > (_b_)) ? (_a_) : (_b_))
+
+/*
+ HACK: @INCOMPLETE:
+Currently this only supports aligning struct fields and uses an algorithm which only gives the correct answer in very simple cases.
+
+  @TODO: Basic parser/lexer
+  @TODO: Align by character
+*/
+static void
+np3w_align(Application_Links * app, Buffer_Summary * buffer, int32_t min_line, int32_t max_line){
+    int32_t column = 0;
+    
+    for(int line_number=min_line; line_number<=max_line; line_number++) {
+        
+        int32_t line_start = buffer_get_line_start(app, buffer, line_number);
+        int32_t line_end = buffer_get_line_end(app, buffer, line_number);
+        
+        int32_t pos = line_start;
+        
+        char buf[256];
+        int32_t ident_begin = -1, ident_whitespace_begin = -1;
+        
+        int32_t whitespace_begin = -1;
+        bool is_in_whitespace_seq = false;
+        
+        bool can_begin_ident = true;
+        
+        while(pos < line_end){
+            int num_bytes = np_min(sizeof(buf), line_end - pos);
+            
+            if (buffer_read_range(app, buffer, pos, pos + num_bytes, buf)) {
+                for(int i = 0; i < num_bytes; ++i){
+                    char c = buf[i];
+                    if(c == ';'){
+                        continue;
+                    }else if((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c == '_') || (c >= '0' && c <= '9')){
+                        if(can_begin_ident){
+                            if(c < '0' || c > '9'){
+                                ident_begin = pos + i;
+                                ident_whitespace_begin = (is_in_whitespace_seq) ? (whitespace_begin) : (-1);
+                                can_begin_ident = false;
+                            }
+                        }
+                    }else{
+                        can_begin_ident = true;
+                    }
+                    
+                    if(c == ' '){
+                        if(!is_in_whitespace_seq){
+                            whitespace_begin = pos + i;
+                        }
+                        is_in_whitespace_seq = true;
+                    }else{
+                        is_in_whitespace_seq = false;
+                    }
+                }
+                
+                pos += num_bytes;
+            }else{
+                break;
+            }
+        }
+        
+        if(ident_begin >= 0){
+            int removed_whitespace = 0;
+            if(ident_begin != -1 && ident_whitespace_begin != -1){
+                buffer_replace_range(app, buffer, ident_whitespace_begin, ident_begin, " ", 1);
+                removed_whitespace = ident_begin - ident_whitespace_begin;
+            }
+            
+            column = np_max(ident_begin - line_start - removed_whitespace, column);
+        }
+    }
+    
+    column += 8;
+    column &= ~3;
+    
+    for(int line_number=min_line; line_number<=max_line; line_number++) {
+        
+        int32_t line_start = buffer_get_line_start(app, buffer, line_number);
+        int32_t line_end = buffer_get_line_end(app, buffer, line_number);
+        
+        int32_t pos = line_start;
+        
+        char buf[256];
+        int32_t ident_begin = -1, ident_end = 0;
+        bool can_begin_ident = true;
+        
+        while(pos < line_end){
+            int num_bytes = np_min(sizeof(buf), line_end - pos);
+            
+            if (buffer_read_range(app, buffer, pos, pos + num_bytes, buf)) {
+                for(int i = 0; i < num_bytes; ++i){
+                    char c = buf[i];
+                    if(c == ';'){
+                        continue;
+                    }else if((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c == '_') || (c >= '0' && c <= '9')){
+                        if(can_begin_ident){
+                            if(c < '0' || c > '9'){
+                                ident_begin = pos + i;
+                                can_begin_ident = false;
+                            }
+                        }else{
+                            ident_end = pos + i + 1;
+                        }
+                    }else{
+                        can_begin_ident = true;
+                    }
+                }
+                
+                pos += num_bytes;
+            }else{
+                break;
+            }
+        }
+        
+        if(ident_begin >= 0){
+            char spaces[1024];
+            memset(spaces, ' ', sizeof(spaces));
+            
+            int num_spaces = column - (ident_begin - line_start);
+            
+            for(int i = 0; i < num_spaces; i += sizeof(spaces)){
+                int num = np_min(num_spaces, sizeof(spaces));
+                
+                buffer_replace_range(app, buffer, ident_begin, ident_begin, spaces, num);
+            }
+        }
+    }
+}
+
+CUSTOM_COMMAND_SIG(np3w_align_feilds){
+    View_Summary view = get_active_view(app, AccessOpen);
+    Buffer_Summary buffer = get_buffer(app, view.buffer_id, AccessOpen);
+    
+    int32_t start = view.cursor.line;
+    int32_t end   = view.mark.line;
+    if(start > end){
+        int32_t tmp = start;
+        start = end;
+        end = tmp;
+    }
+    
+    np3w_align(app, &buffer, start, end);
+}
+
 
 void np3w_default_keys(Bind_Helper *context){
     begin_map(context, mapid_global);
@@ -1033,6 +1256,8 @@ void np3w_default_keys(Bind_Helper *context){
     bind(context, '\n', MDFR_SHIFT, newline_or_goto_position_same_panel);
     bind(context, ' ', MDFR_SHIFT, write_character);
     
+    bind(context, 'A', MDFR_CTRL, np3w_align_feilds);
+    
     /* Croepha selection bindings */
     
     bind_vanilla_keys(context, cro_selection_write_character);
@@ -1110,7 +1335,8 @@ START_HOOK_SIG(np3w_init){
     //np3w_set_colors(app, true);
     //change_theme(app, literal("Handmade Hero"));
     //change_theme(app, literal("stb"));
-    change_theme(app, literal("Np3w"));
+    //change_theme(app, literal("Np3w_2"));
+    np3w_dark_theme(app);
     
     return(0);
 }
