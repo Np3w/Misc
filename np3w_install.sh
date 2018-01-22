@@ -13,7 +13,6 @@ if [[ $INSTALL_PACKAGES -eq 1 ]] ; then
 	sudo apt install gcc
 	sudo apt install g++
 	sudo apt install clang
-	sudo apt install clang++
 	sudo apt install build-essentials
 
 	sudo apt install cgdb

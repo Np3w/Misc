@@ -892,7 +892,7 @@ CUSTOM_COMMAND_SIG(np3w_copy_line){
 #define np_max(_a_, _b_) (((_a_) > (_b_)) ? (_a_) : (_b_))
 
 /*
- HACK: @INCOMPLETE:
+ @HACK: @INCOMPLETE:
 Currently this only supports aligning struct fields and uses an algorithm which only gives the correct answer in very simple cases.
 
   @TODO: Basic parser/lexer
@@ -915,6 +915,10 @@ np3w_align(Application_Links * app, Buffer_Summary * buffer, int32_t min_line, i
         int32_t whitespace_begin = -1;
         bool is_in_whitespace_seq = false;
         
+        int array_bounds_count = 0; // + 1 for every '[' and - 1 for every ']' encountered.
+        
+        bool can_begin_comment = false;
+        
         bool can_begin_ident = true;
         
         while(pos < line_end){
@@ -926,7 +930,7 @@ np3w_align(Application_Links * app, Buffer_Summary * buffer, int32_t min_line, i
                     if(c == ';'){
                         continue;
                     }else if((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c == '_') || (c >= '0' && c <= '9')){
-                        if(can_begin_ident){
+                        if(can_begin_ident && array_bounds_count == 0){
                             if(c < '0' || c > '9'){
                                 ident_begin = pos + i;
                                 ident_whitespace_begin = (is_in_whitespace_seq) ? (whitespace_begin) : (-1);
@@ -935,6 +939,22 @@ np3w_align(Application_Links * app, Buffer_Summary * buffer, int32_t min_line, i
                         }
                     }else{
                         can_begin_ident = true;
+                    }
+                    
+                    if(c == '['){
+                        array_bounds_count += 1;
+                    }else if(c == ']'){
+                        array_bounds_count -= 1;
+                    }
+                    
+                    if(c == '/'){
+                        if(can_begin_comment){
+                            goto break_loop_0;
+                        }else{
+                            can_begin_comment = true;
+                        }
+                    }else{
+                        can_begin_comment = false;
                     }
                     
                     if(c == ' '){
@@ -952,6 +972,7 @@ np3w_align(Application_Links * app, Buffer_Summary * buffer, int32_t min_line, i
                 break;
             }
         }
+        if(0){break_loop_0:;}
         
         if(ident_begin >= 0){
             int removed_whitespace = 0;
@@ -978,6 +999,10 @@ np3w_align(Application_Links * app, Buffer_Summary * buffer, int32_t min_line, i
         int32_t ident_begin = -1, ident_end = 0;
         bool can_begin_ident = true;
         
+        bool can_begin_comment = false;
+        
+        int array_bounds_count = 0; // + 1 for every '[' and - 1 for every ']' encountered.
+        
         while(pos < line_end){
             int num_bytes = np_min(sizeof(buf), line_end - pos);
             
@@ -987,7 +1012,7 @@ np3w_align(Application_Links * app, Buffer_Summary * buffer, int32_t min_line, i
                     if(c == ';'){
                         continue;
                     }else if((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c == '_') || (c >= '0' && c <= '9')){
-                        if(can_begin_ident){
+                        if(can_begin_ident && array_bounds_count == 0){
                             if(c < '0' || c > '9'){
                                 ident_begin = pos + i;
                                 can_begin_ident = false;
@@ -998,6 +1023,23 @@ np3w_align(Application_Links * app, Buffer_Summary * buffer, int32_t min_line, i
                     }else{
                         can_begin_ident = true;
                     }
+                    
+                    
+                    if(c == '['){
+                        array_bounds_count += 1;
+                    }else if(c == ']'){
+                        array_bounds_count -= 1;
+                    }
+                    
+                    if(c == '/'){ // Comments
+                        if(can_begin_comment){
+                            goto break_loop_1;
+                        }else{
+                            can_begin_comment = true;
+                        }
+                    }else{
+                        can_begin_comment = false;
+                    }
                 }
                 
                 pos += num_bytes;
@@ -1005,6 +1047,7 @@ np3w_align(Application_Links * app, Buffer_Summary * buffer, int32_t min_line, i
                 break;
             }
         }
+        if(0){break_loop_1:;}
         
         if(ident_begin >= 0){
             char spaces[1024];
