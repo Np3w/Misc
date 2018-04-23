@@ -41,6 +41,12 @@ echo "Terraria mode: $TERRARIA_MODE, X recover: $XRECOVER"
 ####
 # Actually do stuff
 
+# Try to start pulseaudio here because as of 2018-03-11 pulseaudio doesn't want to start at startup (seems like it is crashing the first time it is run)
+pulseaudio --start
+
+# Override default DPI because it seems to be set to a random value at startup...
+xrandr --dpi 96
+
 # Seems to fail sometimes without the sleep
 sleep 2
 

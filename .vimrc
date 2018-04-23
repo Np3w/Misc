@@ -1,4 +1,4 @@
-" Np3w's vim config
+" Np3w's vim/nvim config
 
 " Neovim
 let $NVIM_TUI_ENABLE_TRUE_COLOR=1
@@ -9,7 +9,7 @@ let $NVIM_TUI_ENABLE_TRUE_COLOR=1
 :set wrap
 
 " Try to remove weird latency issues
-:set timeoutlen=1000
+:set timeoutlen=0
 :set ttimeoutlen=0
 :set lazyredraw
 
@@ -77,17 +77,26 @@ let $NVIM_TUI_ENABLE_TRUE_COLOR=1
 :nnoremap <c-tab> :tabnext<enter>
 :nnoremap <c-n> :tabnext<enter>
 
+" insert newline without going into insert mode
+:nnoremap <c-o> o<esc>k
+:nnoremap <c-s-o> O<esc>j
+
 " Exit terminal mode shortcut
 :if has('nvim')
 :	tnoremap <esc> <C-\><C-n><C-w>k
 :endif
 
-" Build project
+" Project code
 :function! BuildProject()
-	:!./build.sh
+    :!./build.sh
 :endfunction
 
-:nnoremap <c-b> :call BuildProject()<enter>
+:function! RunProject()
+    :!./run.sh
+:endfunction
+
+:nnoremap <F6> :call RunProject()<enter>
+:nnoremap <F4>   :call BuildProject()<enter>
 
 " Use clipboard by default
 :set clipboard=unnamed,unnamedplus
@@ -183,7 +192,8 @@ let $NVIM_TUI_ENABLE_TRUE_COLOR=1
 :hi! link cCppString String
 :endif
 
-:if 1
+:if 0
+" Another colorscheme
 :if 0
 :hi Normal guibg=#0c2000 guifg=#c0c900
 :else
@@ -206,6 +216,11 @@ let $NVIM_TUI_ENABLE_TRUE_COLOR=1
 
 :hi! link cType Type
 :hi! link cCppString String
+:endif
+
+:if 1
+" A nice colorscheme
+:colorscheme morning
 :endif
 
 
