@@ -22,8 +22,8 @@ let $NVIM_TUI_ENABLE_TRUE_COLOR=1
 :nnoremap <delete> "_dd
 
 " Change case of current word
-:inoremap <c-c> <esc>viw~i
-:nnoremap <c-c> viw~
+":inoremap <c-c> <esc>viw~i
+":nnoremap <c-c> viw~
 
 :nnoremap <c-down>   }
 :nnoremap <c-up>     {
@@ -96,7 +96,8 @@ let $NVIM_TUI_ENABLE_TRUE_COLOR=1
 :endfunction
 
 :nnoremap <F6> :call RunProject()<enter>
-:nnoremap <F4>   :call BuildProject()<enter>
+:nnoremap <F4> :call BuildProject()<enter>
+:nnoremap <c-b> :call BuildProject()<enter>
 
 " Use clipboard by default
 :set clipboard=unnamed,unnamedplus
