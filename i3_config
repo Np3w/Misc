@@ -180,6 +180,10 @@ mode "move" {
 	bindsym Escape mode "default"
 }
 
+# Disable trackpad on laptop
+bindsym $mod+t exec --no-startup-id "xinput --disable 13"
+bindsym $mod+shift+t exec --no-startup-id "xinput --enable 13"
+
 # Stuff
 exec --no-startup-id ~/proj/Misc/np3w_init.sh
 

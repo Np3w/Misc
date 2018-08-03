@@ -348,7 +348,8 @@ elif [[ $KEYBOARD_LAYOUT = "qwerty" ]] ; then
     xmodmap -e "keycode  17 = 8 asterisk 8 asterisk"
     xmodmap -e "keycode  18 = 9 parenleft 9 parenleft"
     xmodmap -e "keycode  19 = 0 parenright 0 parenright"
-    xmodmap -e "keycode  20 = minus underscore minus underscore"
+    #xmodmap -e "keycode  20 = minus underscore minus underscore"
+    xmodmap -e "keycode  20 = minus equal plus dollar"
     xmodmap -e "keycode  21 = equal plus equal plus"
     xmodmap -e "keycode  22 = BackSpace BackSpace BackSpace BackSpace"
     xmodmap -e "keycode  23 = Tab ISO_Left_Tab Tab ISO_Left_Tab"
@@ -594,7 +595,56 @@ fi
 xset r rate 160 30
 
 if [ $TERRARIA_MODE = true ]; then
-	xset r rate 500 2
+    xset r rate 500 2
 fi
+
+USING_LAPTOP_WITH_TWO_MONITORS=1
+
+if [ $USING_LAPTOP_WITH_TWO_MONITORS -eq 1 ] ; then
+    # fix weird monitor problem on laptop (2018-07-01)
+    # This fixes a problem which is caused by X11 being a horrible piece of software
+    # that doesn't handle multiple monitors without lots of manual configuration.
+    # Both X -configure (which seems to be completly broken both on my machine and several other people on the internet)
+    # and nvidia-xconfig doesn't produce sane X configuration files that "just works".
+    echo "BEGIN HACK: The following hack may produce X11 errors which are very odd"
+
+    echo "Setting up primary monitor"
+
+    echo "Step 1: Register mode with xrandr"
+    xrandr --newmode "2560x1440_30.00"  146.27  2560 2680 2944 3328  1440 1441 1444 1465  -HSync +Vsync
+    echo "Step 2: Tell xrandr that it is allowed to use this new mode together with the HDMI output"
+    xrandr --addmode HDMI-1-1 "2560x1440_30.00"
+    echo "Step 3: Tell xrandr to use the newly created mode with sane options"
+    #xrandr --output HDMI-1-1 --mode "2560x1440_30.00" --primary --dpi 96 --panning 0x0 --pos 1368x0
+    xrandr --output HDMI-1-1 --mode "2560x1440_30.00" --primary --dpi 96 --panning 0x0 --pos 0x0
+
+    echo "Setting up laptop monitor"
+
+    #echo "Step 1: Creating new mode"
+    #xrandr --newmode "1368x768_60.00"  85.86  1368 1440 1584 1800  768 769 772 795  -HSync +Vsync
+    #echo "Step 2: Tell xrandr that it can use the new mode with the laptop monitor"
+    #xrandr --addmode LVDS-1-1 "1368x768_60.00"
+    #echo "Step 3: Tell xrandr to use the new mode on the laptop monitor"
+    #xrandr --output LVDS-1-1 --mode "1368x768_60.00" --panning 0x0 --pos 0x672
+    #xrandr --output LVDS-1-1 --panning 0x0 --pos 0x672
+    xrandr --output LVDS-1-1 --panning 0x0 --pos 2560x672
+
+
+    echo "Tell i3 that it should restart to adjust for changes in DPI"
+    i3-msg restart
+
+    # dmenu seems to be unhappy at startup and maybe this helps?
+    dmenu_run
+
+    echo "END HACK"
+fi
+
+
+
+
+
+
+
+
 
 

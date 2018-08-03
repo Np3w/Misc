@@ -219,10 +219,11 @@ let $NVIM_TUI_ENABLE_TRUE_COLOR=1
 :hi! link cCppString String
 :endif
 
-:if 1
+:if 0
 " A nice colorscheme
 :colorscheme morning
 :endif
+:colorscheme evening
 
 
 :syntax enable
